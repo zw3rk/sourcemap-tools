@@ -12,7 +12,13 @@ help: ## Show this help message
 
 .PHONY: init
 init: ## Initialize the project (install dependencies)
-	npm install
+	@if [ -n "$$CI" ]; then \
+		echo "Running in CI environment, using npm ci"; \
+		npm ci; \
+	else \
+		echo "Running in development environment, using npm install"; \
+		npm install; \
+	fi
 	@echo "Project initialized successfully!"
 
 .PHONY: dev
@@ -37,7 +43,7 @@ format: ## Format code
 
 .PHONY: package
 package: build ## Package extension for distribution
-	npx @vscode/vsce package
+	npm run package
 
 .PHONY: publish
 publish: ## Publish extension to marketplace (requires authentication)
@@ -63,3 +69,13 @@ watch-test: ## Run tests in watch mode
 
 .PHONY: check
 check: lint test ## Run all checks (lint + test)
+
+.PHONY: ci
+ci: ## Run full CI pipeline (init, lint, test, build, package)
+	@echo "Running full CI pipeline..."
+	$(MAKE) init
+	$(MAKE) lint
+	$(MAKE) test
+	$(MAKE) build
+	$(MAKE) package
+	@echo "CI pipeline completed successfully!"

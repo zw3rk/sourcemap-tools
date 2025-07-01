@@ -5,6 +5,26 @@ import { DescParser, DescFile } from './DescParser';
 import { encodeVLQArray } from '../common/vlq';
 import { Logger } from '../common/logger';
 
+interface WebviewMessage {
+    type: string;
+    message?: string;
+    data?: unknown;
+    mapping?: {
+        genLine: number;
+        genCol: number;
+        srcLine: number;
+        srcCol: number;
+        semanticType: string;
+    };
+    index?: number;
+    mappings?: unknown[];
+    path?: string;
+    action?: string;
+    descriptor?: string;
+    line?: number;
+    value?: string;
+}
+
 export class DescEditorProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
         const provider = new DescEditorProvider(context);
@@ -92,13 +112,13 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
             } catch (error) {
                 void webviewPanel.webview.postMessage({
                     type: 'error',
-                    message: `Failed to parse .desc file: ${error}`
+                    message: `Failed to parse .desc file: ${String(error)}`
                 });
             }
         };
 
         // Handle messages from the webview
-        webviewPanel.webview.onDidReceiveMessage(async message => {
+        webviewPanel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
             const logger = Logger.getInstance();
             
             switch (message.type) {
@@ -107,15 +127,15 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     break;
                 
                 case 'log':
-                    if (message.data) {
-                        logger.log(message.message, message.data);
+                    if (message.data !== undefined && message.data !== null) {
+                        logger.log(message.message as string, message.data);
                     } else {
-                        logger.log(message.message);
+                        logger.log(message.message as string);
                     }
                     break;
                 
                 case 'addMapping':
-                    if (descFile) {
+                    if (descFile && message.mapping) {
                         // Insert new mapping at the appropriate position
                         const newMapping = message.mapping;
                         logger.log('Adding mapping', newMapping);
@@ -162,7 +182,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                     lastMappingLine = j;
                                     // Parse existing mapping to check line and column
                                     const match = mappingLine.match(/\[(\d+),/);
-                                    if (match && match[1]) {
+                                    if (match && match[1] !== undefined) {
                                         const existingCol = parseInt(match[1]);
                                         if (currentGenLine === newMapping.genLine && existingCol > newMapping.genCol && !foundTargetPosition) {
                                             // Insert before this mapping (same line, but higher column)
@@ -217,8 +237,8 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     }
                     break;
                 
-                case 'deleteMapping':
-                    const mappingIndex = message.index;
+                case 'deleteMapping': {
+                    const mappingIndex = message.index as number;
                     logger.log(`Deleting mapping at index ${mappingIndex}`, {
                         totalMappings: descFile?.mappings.length,
                         mapping: descFile?.mappings[mappingIndex]
@@ -272,13 +292,21 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         }
                     }
                     break;
+                }
                 
-                case 'syncMappings':
-                    if (descFile && message.mappings) {
+                case 'syncMappings': {
+                    if (descFile && message.mappings && Array.isArray(message.mappings)) {
+                        const mappings = message.mappings as Array<{
+                            genLine: number;
+                            genCol: number;
+                            srcLine: number;
+                            srcCol: number;
+                            semanticType?: string;
+                        }>;
                         logger.log('Syncing all mappings', { 
-                            count: message.mappings.length,
-                            firstMapping: message.mappings[0],
-                            allMappings: message.mappings
+                            count: mappings.length,
+                            firstMapping: mappings[0],
+                            allMappings: mappings
                         });
                         
                         // Find where mappings section starts
@@ -309,8 +337,10 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             }
                             
                             // Sort mappings by generated line and column
-                            const sortedMappings = [...message.mappings].sort((a, b) => {
-                                if (a.genLine !== b.genLine) return a.genLine - b.genLine;
+                            const sortedMappings = [...mappings].sort((a, b) => {
+                                if (a.genLine !== b.genLine) {
+return a.genLine - b.genLine;
+}
                                 return a.genCol - b.genCol;
                             });
                             
@@ -366,11 +396,16 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         }
                     }
                     break;
+                }
                 
-                case 'updateMapping':
-                    const { line, mapping } = message;
+                case 'updateMapping': {
+                    const line = message.line as number;
+                    const mapping = message.mapping;
+                    if (!mapping) {
+break;
+}
                     const updateEdit = new vscode.WorkspaceEdit();
-                    const mappingText = `[${mapping.genCol},${mapping.srcIdx},${mapping.srcLine},${mapping.srcCol},${mapping.semanticType}]`;
+                    const mappingText = `[${mapping.genCol},1,${mapping.srcLine},${mapping.srcCol},${mapping.semanticType || ''}]`;
                     updateEdit.replace(
                         document.uri,
                         new vscode.Range(line, 0, line, document.lineAt(line).text.length),
@@ -378,6 +413,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     );
                     await vscode.workspace.applyEdit(updateEdit);
                     break;
+                }
                 
                 case 'updateInput':
                     if (descFile) {
@@ -439,7 +475,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                 outputEdit.insert(document.uri, new vscode.Position(outputLineIndex + 1, 0), newContent + '\n');
                             } catch (err) {
                                 // File doesn't exist yet, that's okay
-                                console.log(`Output file not found: ${message.value}`);
+                                logger.log(`Output file not found: ${message.value}`);
                             }
                         }
                         
@@ -447,7 +483,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     }
                     break;
                 
-                case 'browseInput':
+                case 'browseInput': {
                     const inputFileUri = await vscode.window.showOpenDialog({
                         canSelectFiles: true,
                         canSelectFolders: false,
@@ -465,8 +501,9 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         });
                     }
                     break;
+                }
                 
-                case 'browseOutput':
+                case 'browseOutput': {
                     const outputFileUri = await vscode.window.showOpenDialog({
                         canSelectFiles: true,
                         canSelectFolders: false,
@@ -484,6 +521,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         });
                     }
                     break;
+                }
                 
                 case 'exportSourceMap':
                     if (descFile) {
