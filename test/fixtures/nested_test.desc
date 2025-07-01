@@ -1,0 +1,73 @@
+INPUT: nested_test.uwu
+1.0.0
+-- Test nested expressions for span-based source mapping
+
+-- Deeply nested lambdas and applications
+(λx
+  (λy
+    (λz
+      (addInteger
+        (addInteger x y)
+        z))))
+  5
+  10
+  15
+
+OUTPUT: nested_test.uplc
+(program 1.0.0
+  [[[(lam x (lam y (lam z [[(builtin addInteger) [[(builtin addInteger) x] y]] z]))) (con integer 5)] (con integer 10)] (con integer 15)]
+)
+
+# 1-based absolute indices, will need to be converted to 0-based VLQ encoded "mappings".
+[1,1,1,1,PGM]                        # (program 1.0.0 ... )
+[10,1,1,1,VER]                       # 1.0.0
+[-]                                  # line break
+[3,1,13,2,APP]                       # Outermost application [[[
+[4,1,12,2,APP]                       # Second application [[
+[5,1,11,2,APP]                       # Third application [
+[6,1,5,1,LPAREN]                     # (
+[7,1,5,2,LAM]                        # lam
+[10]
+[11,1,5,3,X]                         # x
+[12]
+[13,1,6,3,LPAREN]                    # (
+[14,1,6,4,LAM]                       # lam
+[17]
+[18,1,6,5,Y]                         # y
+[19]
+[20,1,7,5,LPAREN]                    # (
+[21,1,7,6,LAM]                       # lam
+[24]
+[25,1,7,7,Z]                         # z
+[26]
+[27,1,10,8,APP]                       # [[(builtin addInteger) ...] z]
+[28,1,9,8,APP]                      # [(builtin addInteger) ...]
+[29,1,8,7,addInteger]                # (builtin addInteger)
+[49,1,9,8,APP]
+[50,1,9,22,APP]                      # [[(builtin addInteger) x] y]
+[51,1,9,20,APP]                      # [(builtin addInteger) x]
+[52,1,9,9,addInteger]                # (builtin addInteger)
+[72,1,9,20,APP]                      # Back to application
+[73,1,9,21,X]                        # x
+[74,1,9,20,APP]                      # ]
+[75,1,9,22,APP]
+[76,1,9,23,Y]                        # y
+[77,1,9,22,APP]                      # ]
+[78,1,9,8,APP]                       # ]
+[79,1,10,8,APP]
+[80,1,10,9,Z]                        # z
+[81,1,10,8,APP]                      # ]
+[82,1,10,11,RPAREN]                  # End z lambda body
+[83,1,10,12,RPAREN]                  # End y lambda body
+[84,1,10,13,RPAREN]                  # End x lambda body
+[85,1,11,2,APP]                      # <space>
+[86,1,11,3,INTEGER]                  # (con integer 5)
+[101,1,11,2,APP]                     # End first application
+[102,1,12,2,APP]                     # <space>
+[103,1,12,3,INTEGER]                 # (con integer 10)
+[119,1,12,2,APP]                     # End second application
+[120,1,13,2,APP]                     # <space>
+[121,1,13,3,INTEGER]                 # (con integer 15)
+[137,1,13,2,APP]                     # End third application
+[-]                                  # line break
+[1,1,1,1,PGM]                        # End program

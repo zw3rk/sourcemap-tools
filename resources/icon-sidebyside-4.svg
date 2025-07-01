@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Soft gradient background -->
+    <radialGradient id="bgSoft" cx="40%" cy="40%" r="90%">
+      <stop offset="0%" style="stop-color:#0098ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Subtle inner shadow for depth -->
+    <filter id="innerShadow">
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="128" height="128" fill="url(#bgSoft)" rx="22" ry="22"/>
+  
+  <!-- Source document (left) with rounded corners -->
+  <rect x="9" y="16" width="55" height="96" rx="4" ry="4" 
+        fill="#ffffff" filter="url(#innerShadow)" stroke="#e0e0e0" stroke-width="0.5"/>
+  
+  <!-- Code lines on source - compact spacing -->
+  <rect x="14" y="24" width="44" height="1.8" rx="0.5" fill="#569CD6" opacity="0.85"/>
+  <rect x="14" y="29" width="38" height="1.8" rx="0.5" fill="#4EC9B0" opacity="0.85"/>
+  <rect x="14" y="34" width="42" height="1.8" rx="0.5" fill="#C586C0" opacity="0.85"/>
+  <rect x="14" y="39" width="36" height="1.8" rx="0.5" fill="#DCDCAA" opacity="0.85"/>
+  <rect x="14" y="44" width="40" height="1.8" rx="0.5" fill="#CE9178" opacity="0.85"/>
+  <rect x="14" y="49" width="44" height="1.8" rx="0.5" fill="#569CD6" opacity="0.85"/>
+  <rect x="14" y="54" width="34" height="1.8" rx="0.5" fill="#B5CEA8" opacity="0.85"/>
+  <rect x="14" y="59" width="42" height="1.8" rx="0.5" fill="#9CDCFE" opacity="0.85"/>
+  <rect x="14" y="64" width="38" height="1.8" rx="0.5" fill="#FFD700" opacity="0.85"/>
+  <rect x="14" y="69" width="41" height="1.8" rx="0.5" fill="#FF6B6B" opacity="0.85"/>
+  <rect x="14" y="74" width="36" height="1.8" rx="0.5" fill="#4ECDC4" opacity="0.85"/>
+  <rect x="14" y="79" width="43" height="1.8" rx="0.5" fill="#C586C0" opacity="0.85"/>
+  <rect x="14" y="84" width="39" height="1.8" rx="0.5" fill="#569CD6" opacity="0.85"/>
+  <rect x="14" y="89" width="44" height="1.8" rx="0.5" fill="#DCDCAA" opacity="0.85"/>
+  <rect x="14" y="94" width="37" height="1.8" rx="0.5" fill="#CE9178" opacity="0.85"/>
+  <rect x="14" y="99" width="42" height="1.8" rx="0.5" fill="#B5CEA8" opacity="0.85"/>
+  <rect x="14" y="104" width="40" height="1.8" rx="0.5" fill="#9CDCFE" opacity="0.85"/>
+  
+  <!-- Generated document (right) -->
+  <rect x="66" y="16" width="55" height="96" rx="4" ry="4" 
+        fill="#ffffff" filter="url(#innerShadow)" stroke="#e0e0e0" stroke-width="0.5"/>
+  
+  <!-- Code lines on generated -->
+  <rect x="71" y="24" width="41" height="1.8" rx="0.5" fill="#9CDCFE" opacity="0.85"/>
+  <rect x="71" y="29" width="45" height="1.8" rx="0.5" fill="#B5CEA8" opacity="0.85"/>
+  <rect x="71" y="34" width="39" height="1.8" rx="0.5" fill="#FFD700" opacity="0.85"/>
+  <rect x="71" y="39" width="43" height="1.8" rx="0.5" fill="#FF6B6B" opacity="0.85"/>
+  <rect x="71" y="44" width="37" height="1.8" rx="0.5" fill="#4ECDC4" opacity="0.85"/>
+  <rect x="71" y="49" width="41" height="1.8" rx="0.5" fill="#569CD6" opacity="0.85"/>
+  <rect x="71" y="54" width="45" height="1.8" rx="0.5" fill="#CE9178" opacity="0.85"/>
+  <rect x="71" y="59" width="38" height="1.8" rx="0.5" fill="#DCDCAA" opacity="0.85"/>
+  <rect x="71" y="64" width="42" height="1.8" rx="0.5" fill="#9CDCFE" opacity="0.85"/>
+  <rect x="71" y="69" width="40" height="1.8" rx="0.5" fill="#B5CEA8" opacity="0.85"/>
+  <rect x="71" y="74" width="44" height="1.8" rx="0.5" fill="#FFD700" opacity="0.85"/>
+  <rect x="71" y="79" width="36" height="1.8" rx="0.5" fill="#4ECDC4" opacity="0.85"/>
+  <rect x="71" y="84" width="43" height="1.8" rx="0.5" fill="#FF6B6B" opacity="0.85"/>
+  <rect x="71" y="89" width="39" height="1.8" rx="0.5" fill="#569CD6" opacity="0.85"/>
+  <rect x="71" y="94" width="45" height="1.8" rx="0.5" fill="#C586C0" opacity="0.85"/>
+  <rect x="71" y="99" width="37" height="1.8" rx="0.5" fill="#DCDCAA" opacity="0.85"/>
+  <rect x="71" y="104" width="43" height="1.8" rx="0.5" fill="#CE9178" opacity="0.85"/>
+  
+  <!-- Subtle curved connections -->
+  <g stroke-width="1.5" fill="none" opacity="0.4" stroke-linecap="round">
+    <path d="M 58 44.5 C 65 44.5, 65 44.5, 71 44.5" stroke="#CE9178"/>
+    <path d="M 56 69.5 C 65 68, 65 71, 71 69.5" stroke="#FF6B6B"/>
+    <path d="M 58 94.5 C 65 93, 65 96, 71 94.5" stroke="#CE9178"/>
+  </g>
+</svg>

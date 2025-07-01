@@ -1,0 +1,62 @@
+# Build and development artifacts
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.git/**
+tsconfig.json
+webpack.config.js
+node_modules/**
+.envrc
+flake.nix
+flake.lock
+shell.nix
+*.nix
+
+# Development documentation
+docs/development/**
+CLAUDE.md
+
+# Development artifacts
+.claude/**
+.direnv/**
+
+# Test files
+test/**
+scripts/**
+examples/**
+test/fixtures/**
+
+# Source files
+webview/**
+!out/**
+
+# Build tools
+Makefile
+.eslintrc.json
+.prettierrc
+
+# Editor configs
+.editorconfig
+
+# CI/CD
+.github/**
+
+# Misc
+*.log
+*.map
+.DS_Store
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Keep essential files
+!package.json
+!package-lock.json
+!README.md
+!CHANGELOG.md
+!LICENSE
+!resources/**

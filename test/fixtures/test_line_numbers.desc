@@ -1,0 +1,10 @@
+INPUT: test_source.js
+VERSION
+3
+OUTPUT: test_output.js
+// Line 1
+// Line 2
+// Line 3
+// Line 4
+// Line 5
+-- genLine:genCol -> srcIdx:srcLine:srcCol:semanticType // 1-based absolute indices

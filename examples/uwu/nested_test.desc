@@ -1,0 +1,46 @@
+INPUT: nested_test.uwu
+VERSION
+3
+OUTPUT: nested_test.uplc
+(program 1.0.0
+  [[[(lam x (lam y (lam z [[(builtin addInteger) [[(builtin addInteger) x] y]] z]))) (con integer 5)] (con integer 10)] (con integer 15)]
+)
+
+-- genLine:genCol -> srcIdx:srcLine:srcCol:semanticType // 1-based absolute indices
+[2,1,1,1,PGM]
+[-]
+[3,1,13,2,APP]
+[4,1,12,2,APP]
+[5,1,11,2,APP]
+[7,1,5,2,lam]
+[10]
+[11,1,5,3,x]
+[12]
+[14,1,6,4,lam]
+[18,1,6,5,y]
+[21,1,7,6,lam]
+[24]
+[25,1,7,7,Z]
+[27,1,9,8,UNKNOWN]
+[29,1,8,8,addInteger]
+[50,1,9,22,UNKNOWN]
+[51,1,9,20,UNKNOWN]
+[52,1,9,10,addInteger]
+[72,1,9,20,UNKNOWN]
+[73,1,9,21,x]
+[74,1,9,20,UNKNOWN]
+[75,1,9,22,UNKNOWN]
+[76,1,9,23,y]
+[77,1,9,22,UNKNOWN]
+[79,1,9,8,UNKNOWN]
+[80,1,10,9,z]
+[81,1,9,8,UNKNOWN]
+[85,1,11,2,<space>]
+[86,1,11,3,5]
+[101,1,11,2,APP_END]
+[102,1,12,2,<space>]
+[103,1,12,3,10]
+[119,1,12,2,APP_END]
+[120,1,13,2,<space>]
+[121,1,13,3,15]
+[137,1,13,2,APP_END]

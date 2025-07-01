@@ -1,0 +1,13 @@
+1.0.0
+-- Test nested expressions for span-based source mapping
+
+-- Deeply nested lambdas and applications
+(λx 
+  (λy 
+    (λz 
+      (addInteger 
+        (addInteger x y) 
+        z))))
+  5
+  10
+  15

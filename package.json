@@ -1,0 +1,182 @@
+{
+  "name": "source-map-visualizer",
+  "displayName": "Source Map Visualizer",
+  "description": "Advanced source map visualization and visual mapping editor for VSCode",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "sourcemap",
+    "source-map",
+    "visualization",
+    "debugging",
+    "mapping",
+    "editor",
+    "visual-editor",
+    "development-tools",
+    "devtools"
+  ],
+  "activationEvents": [
+    "onCommand:sourcemap-visualizer.view",
+    "onCommand:sourcemap-visualizer.editDesc",
+    "onCommand:sourcemap-visualizer.openInTextEditor",
+    "onCommand:sourcemap-visualizer.openInCustomEditor",
+    "onCustomEditor:src-map-viz.mapEditor",
+    "onCustomEditor:src-map-viz.descEditor"
+  ],
+  "main": "./out/extension.js",
+  "publisher": "zw3rk",
+  "author": "zw3rk pte. ltd.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zw3rk/sourcemap-tools"
+  },
+  "bugs": {
+    "url": "https://github.com/zw3rk/sourcemap-tools/issues"
+  },
+  "homepage": "https://github.com/zw3rk/sourcemap-tools#readme",
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zw3rk/src-map-viz"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "sourcemap-visualizer.view",
+        "title": "Visualize Sourcemap",
+        "category": "Source Map"
+      },
+      {
+        "command": "sourcemap-visualizer.editDesc",
+        "title": "Edit Mapping Description",
+        "category": "Source Map"
+      },
+      {
+        "command": "sourcemap-visualizer.showLogs",
+        "title": "Show Extension Logs",
+        "category": "Source Map"
+      },
+      {
+        "command": "sourcemap-visualizer.openInTextEditor",
+        "title": "Open as Text",
+        "category": "Source Map",
+        "icon": "$(file-text)"
+      },
+      {
+        "command": "sourcemap-visualizer.openInCustomEditor",
+        "title": "Open in Visualizer/Editor",
+        "category": "Source Map",
+        "icon": "$(graph)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "sourcemap-visualizer.openInTextEditor",
+          "when": "activeCustomEditorId == 'src-map-viz.mapEditor' || activeCustomEditorId == 'src-map-viz.descEditor'",
+          "group": "navigation",
+          "args": ["${resourceUri}"]
+        },
+        {
+          "command": "sourcemap-visualizer.openInCustomEditor",
+          "when": "resourceExtname == .map && activeCustomEditorId != 'src-map-viz.mapEditor'",
+          "group": "navigation"
+        },
+        {
+          "command": "sourcemap-visualizer.openInCustomEditor",
+          "when": "resourceExtname == .desc && activeCustomEditorId != 'src-map-viz.descEditor'",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Source Map Visualizer",
+      "properties": {
+        "sourcemap-visualizer.autoReload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically reload visualization when source files change"
+        },
+        "sourcemap-visualizer.theme": {
+          "type": "string",
+          "enum": ["auto", "light", "dark"],
+          "default": "auto",
+          "description": "Color theme for the visualizer"
+        },
+        "sourcemap-visualizer.connectionStyle": {
+          "type": "string",
+          "enum": ["bezier", "straight", "step"],
+          "default": "bezier",
+          "description": "Style of connection lines between source and generated code"
+        }
+      }
+    },
+    "customEditors": [
+      {
+        "viewType": "src-map-viz.mapEditor",
+        "displayName": "Source Map Visualizer",
+        "selector": [
+          {
+            "filenamePattern": "*.map"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "src-map-viz.descEditor",
+        "displayName": "Description Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.desc"
+          }
+        ],
+        "priority": "default"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "node ./out/test/runTest.js",
+    "test-watch": "npm run watch & npm run test -- --watch"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.74.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.2.0",
+    "@vscode/vsce": "^2.15.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.7.3",
+    "eslint": "^8.56.0",
+    "glob": "^10.0.0",
+    "mocha": "^10.1.0",
+    "prettier": "^2.8.0",
+    "style-loader": "^3.3.1",
+    "ts-loader": "^9.4.1",
+    "typescript": "^5.0.0",
+    "webpack": "^5.75.0",
+    "webpack-cli": "^5.0.0"
+  },
+  "dependencies": {
+    "source-map": "^0.7.4"
+  }
+}

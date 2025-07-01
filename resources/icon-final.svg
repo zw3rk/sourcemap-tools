@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for VSCode blue background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0098ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Paper gradient for subtle fold effect -->
+    <linearGradient id="paperGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="33%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="33.5%" style="stop-color:#f8f8f8;stop-opacity:1" />
+      <stop offset="34%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="66%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="66.5%" style="stop-color:#f8f8f8;stop-opacity:1" />
+      <stop offset="67%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffffff;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Subtle fold shadows -->
+    <linearGradient id="foldShadow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="32%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="33.5%" style="stop-color:#000000;stop-opacity:0.05" />
+      <stop offset="35%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="65%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="66.5%" style="stop-color:#000000;stop-opacity:0.05" />
+      <stop offset="68%" style="stop-color:#000000;stop-opacity:0" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0" />
+    </linearGradient>
+    
+    <!-- Drop shadow -->
+    <filter id="dropShadow">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-opacity="0.2"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="128" height="128" fill="url(#bgGradient)" rx="24" ry="24"/>
+  
+  <!-- Large single document (90% of image) -->
+  <rect x="13" y="13" width="102" height="102" rx="4" ry="4" 
+        fill="url(#paperGradient)" filter="url(#dropShadow)"/>
+  
+  <!-- Fold shadow overlay -->
+  <rect x="13" y="13" width="102" height="102" rx="4" ry="4" 
+        fill="url(#foldShadow)"/>
+  
+  <!-- Code lines spread across the entire page -->
+  <!-- Left section -->
+  <rect x="20" y="24" width="28" height="3" rx="1" fill="#569CD6"/>
+  <rect x="20" y="30" width="24" height="3" rx="1" fill="#4EC9B0"/>
+  <rect x="20" y="36" width="30" height="3" rx="1" fill="#C586C0"/>
+  <rect x="20" y="42" width="20" height="3" rx="1" fill="#DCDCAA"/>
+  <rect x="20" y="48" width="26" height="3" rx="1" fill="#CE9178"/>
+  <rect x="20" y="54" width="28" height="3" rx="1" fill="#569CD6"/>
+  <rect x="20" y="60" width="22" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="20" y="66" width="30" height="3" rx="1" fill="#9CDCFE"/>
+  <rect x="20" y="72" width="24" height="3" rx="1" fill="#FFD700"/>
+  <rect x="20" y="78" width="28" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="20" y="84" width="20" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="20" y="90" width="26" height="3" rx="1" fill="#C586C0"/>
+  <rect x="20" y="96" width="30" height="3" rx="1" fill="#569CD6"/>
+  <rect x="20" y="102" width="22" height="3" rx="1" fill="#DCDCAA"/>
+  
+  <!-- Middle section (continuing lines) -->
+  <rect x="52" y="24" width="20" height="3" rx="1" fill="#9CDCFE"/>
+  <rect x="74" y="24" width="16" height="3" rx="1" fill="#FFD700"/>
+  <rect x="48" y="30" width="26" height="3" rx="1" fill="#4EC9B0"/>
+  <rect x="76" y="30" width="18" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="52" y="36" width="22" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="76" y="36" width="14" height="3" rx="1" fill="#569CD6"/>
+  <rect x="44" y="42" width="30" height="3" rx="1" fill="#DCDCAA"/>
+  <rect x="76" y="42" width="20" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="50" y="48" width="24" height="3" rx="1" fill="#CE9178"/>
+  <rect x="76" y="48" width="16" height="3" rx="1" fill="#C586C0"/>
+  <rect x="52" y="54" width="20" height="3" rx="1" fill="#9CDCFE"/>
+  <rect x="74" y="54" width="22" height="3" rx="1" fill="#DCDCAA"/>
+  <rect x="48" y="60" width="26" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="76" y="60" width="18" height="3" rx="1" fill="#4EC9B0"/>
+  <rect x="52" y="66" width="22" height="3" rx="1" fill="#CE9178"/>
+  <rect x="76" y="66" width="14" height="3" rx="1" fill="#FFD700"/>
+  <rect x="48" y="72" width="26" height="3" rx="1" fill="#FFD700"/>
+  <rect x="76" y="72" width="20" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="52" y="78" width="20" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="74" y="78" width="16" height="3" rx="1" fill="#569CD6"/>
+  <rect x="44" y="84" width="30" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="76" y="84" width="18" height="3" rx="1" fill="#9CDCFE"/>
+  <rect x="48" y="90" width="24" height="3" rx="1" fill="#C586C0"/>
+  <rect x="74" y="90" width="22" height="3" rx="1" fill="#DCDCAA"/>
+  <rect x="52" y="96" width="20" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="74" y="96" width="16" height="3" rx="1" fill="#CE9178"/>
+  <rect x="44" y="102" width="28" height="3" rx="1" fill="#DCDCAA"/>
+  <rect x="74" y="102" width="20" height="3" rx="1" fill="#4EC9B0"/>
+  
+  <!-- Right section -->
+  <rect x="94" y="24" width="14" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="96" y="30" width="12" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="92" y="36" width="16" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="98" y="42" width="10" height="3" rx="1" fill="#C586C0"/>
+  <rect x="94" y="48" width="14" height="3" rx="1" fill="#9CDCFE"/>
+  <rect x="98" y="54" width="10" height="3" rx="1" fill="#569CD6"/>
+  <rect x="96" y="60" width="12" height="3" rx="1" fill="#CE9178"/>
+  <rect x="92" y="66" width="16" height="3" rx="1" fill="#4EC9B0"/>
+  <rect x="98" y="72" width="10" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="94" y="78" width="14" height="3" rx="1" fill="#B5CEA8"/>
+  <rect x="96" y="84" width="12" height="3" rx="1" fill="#FFD700"/>
+  <rect x="98" y="90" width="10" height="3" rx="1" fill="#4ECDC4"/>
+  <rect x="94" y="96" width="14" height="3" rx="1" fill="#FF6B6B"/>
+  <rect x="96" y="102" width="12" height="3" rx="1" fill="#569CD6"/>
+</svg>

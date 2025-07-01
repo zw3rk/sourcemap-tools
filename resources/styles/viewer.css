@@ -1,0 +1,378 @@
+/* Source Map Visualizer Styles */
+
+:root {
+    --background-color: var(--vscode-editor-background);
+    --foreground-color: var(--vscode-editor-foreground);
+    --border-color: var(--vscode-panel-border);
+    --header-background: var(--vscode-sideBar-background);
+    --hover-background: var(--vscode-editor-hoverHighlightBackground);
+    --highlight-background: var(--vscode-editor-findMatchHighlightBackground);
+    --connection-color: var(--vscode-gitDecoration-modifiedResourceForeground);
+    --toolbar-background: var(--vscode-titleBar-activeBackground);
+    --button-background: var(--vscode-button-background);
+    --button-foreground: var(--vscode-button-foreground);
+    --button-hover-background: var(--vscode-button-hoverBackground);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--vscode-font-family);
+    font-size: var(--vscode-font-size);
+    color: var(--foreground-color);
+    background: var(--background-color);
+    height: 100vh;
+    overflow: hidden;
+}
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#toolbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--toolbar-background);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toolbar-section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#toolbar label {
+    font-weight: 500;
+}
+
+#toolbar select,
+#toolbar button {
+    padding: 4px 8px;
+    background: var(--button-background);
+    color: var(--button-foreground);
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+#toolbar button:hover {
+    background: var(--button-hover-background);
+}
+
+.toolbar-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolbar-button i {
+    font-size: 14px;
+}
+
+#viewer {
+    flex: 1;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+}
+
+.code-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border-color);
+}
+
+.code-pane:last-child {
+    border-right: none;
+}
+
+.pane-header {
+    padding: 8px 16px;
+    background: var(--header-background);
+    border-bottom: 1px solid var(--border-color);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+}
+
+.code-content {
+    flex: 1;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    line-height: var(--vscode-editor-line-height);
+    white-space: pre;
+}
+
+.code-line {
+    display: flex;
+    min-height: var(--vscode-editor-line-height);
+}
+
+.code-line:hover {
+    background-color: var(--vscode-editor-lineHighlightBackground);
+}
+
+.line-number {
+    display: inline-block;
+    padding: 0 16px 0 8px;
+    color: var(--vscode-editorLineNumber-foreground);
+    text-align: right;
+    user-select: none;
+    min-width: 50px;
+}
+
+.code-text {
+    flex: 1;
+    padding-left: 8px;
+}
+
+.connection-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.connection-line {
+    fill: none;
+    stroke: var(--connection-color);
+    stroke-width: 0.8; /* Much thinner */
+    opacity: 0.8;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+.connection-line.active {
+    opacity: 1;
+    stroke-width: 1; /* Thinner for active state */
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+}
+
+.code-segment {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 3px;
+    padding: 0 2px;
+    margin: 0 1px;
+    position: relative;
+}
+
+.code-segment:hover {
+    filter: brightness(1.2);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.code-segment.highlighted {
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 10;
+    position: relative;
+}
+
+.code-segment.persisted {
+    font-weight: bold;
+    z-index: 20;
+    position: relative;
+}
+
+/* Underline/overline for connection anchoring */
+.code-segment.anchor-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    right: 0;
+    height: 1px; /* Reduced from 2px */
+    background-color: var(--segment-color, currentColor); /* Use segment color */
+    opacity: 0.8;
+}
+
+.code-segment.anchor-top::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 1px; /* Reduced from 2px */
+    background-color: var(--segment-color, currentColor); /* Use segment color */
+    opacity: 0.8;
+}
+
+/* Anchor point dots - positioned above/below the lines */
+.code-segment.anchor-bottom .anchor-dot,
+.code-segment.anchor-top .anchor-dot {
+    position: absolute;
+    width: 6px; /* Doubled from 4px */
+    height: 6px; /* Doubled from 4px */
+    background-color: var(--segment-color, currentColor);
+    border-radius: 50%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.code-segment.anchor-bottom .anchor-dot {
+    bottom: -11px; /* 6px below the underline (was 4px) */
+}
+
+.code-segment.anchor-top .anchor-dot {
+    top: -11px; /* 6px above the overline (was 4px) */
+}
+
+/* Add a subtle glow to persisted anchor dots */
+.code-segment.persisted .anchor-dot {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.5),
+                0 0 6px var(--segment-color, currentColor);
+}
+
+.code-text-plain {
+    opacity: 0.7;
+}
+
+#status-bar {
+    padding: 4px 16px;
+    background: var(--header-background);
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mapping-stats {
+    opacity: 0.8;
+    font-size: 11px;
+}
+
+/* Legend Panel */
+.legend-panel {
+    position: absolute;
+    bottom: 40px;
+    right: 20px;
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 500px;
+    max-height: 400px;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.legend-panel.collapsed {
+    max-height: 32px;
+    overflow: hidden;
+}
+
+.legend-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--header-background);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-button {
+    background: none;
+    border: none;
+    color: var(--foreground-color);
+    cursor: pointer;
+    padding: 0 4px;
+    transition: transform 0.3s;
+}
+
+.legend-panel:not(.collapsed) .toggle-button {
+    transform: rotate(180deg);
+}
+
+.legend-content {
+    padding: 8px;
+    overflow-y: auto;
+    max-height: 350px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.legend-item:hover {
+    background-color: var(--hover-background);
+}
+
+.legend-item.active {
+    background-color: var(--highlight-background);
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.legend-text {
+    font-size: 11px;
+    font-family: var(--vscode-editor-font-family);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Loading state */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--vscode-descriptionForeground);
+}
+
+/* Error state */
+.error {
+    color: var(--vscode-errorForeground);
+    padding: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    #viewer {
+        flex-direction: column;
+    }
+
+    .code-pane {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-pane:last-child {
+        border-bottom: none;
+    }
+}

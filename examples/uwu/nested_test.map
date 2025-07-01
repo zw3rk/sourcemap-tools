@@ -1,0 +1,11 @@
+{
+  "version": 3,
+  "file": "nested_test.uplc",
+  "sourceRoot": "",
+  "sources": [
+    "nested_test.uwu"
+  ],
+  "sourcesContent": null,
+  "names": [],
+  "mappings": "CAAA;EAYC,CADA,CADA,EANA,IAAC,GACC,IAAC,GACC,IAAC,IACC,uBACE,qBAAW,GAAE,IACd,KACP,CAAC,eAAD,CACA,CAAC,gBAAD,CACA,CAAC,gBAAD"
+}

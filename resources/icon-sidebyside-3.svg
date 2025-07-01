@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Diagonal gradient background -->
+    <linearGradient id="bgDiagonal" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0078D4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0066CC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0455A8;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Paper texture gradient -->
+    <linearGradient id="paperTexture" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f9f9f9;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Enhanced shadow -->
+    <filter id="shadow3D">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="1" dy="3" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="128" height="128" fill="url(#bgDiagonal)" rx="18" ry="18"/>
+  
+  <!-- Source document (left) -->
+  <rect x="11" y="15" width="53" height="98" rx="3" ry="3" 
+        fill="url(#paperTexture)" filter="url(#shadow3D)"/>
+  
+  <!-- Code lines on source with varying lengths -->
+  <rect x="16" y="23" width="40" height="2.2" rx="1" fill="#569CD6"/>
+  <rect x="16" y="29" width="34" height="2.2" rx="1" fill="#4EC9B0"/>
+  <rect x="16" y="35" width="42" height="2.2" rx="1" fill="#C586C0"/>
+  <rect x="16" y="41" width="30" height="2.2" rx="1" fill="#DCDCAA"/>
+  <rect x="16" y="47" width="38" height="2.2" rx="1" fill="#CE9178"/>
+  <rect x="16" y="53" width="41" height="2.2" rx="1" fill="#569CD6"/>
+  <rect x="16" y="59" width="35" height="2.2" rx="1" fill="#B5CEA8"/>
+  <rect x="16" y="65" width="39" height="2.2" rx="1" fill="#9CDCFE"/>
+  <rect x="16" y="71" width="33" height="2.2" rx="1" fill="#FFD700"/>
+  <rect x="16" y="77" width="42" height="2.2" rx="1" fill="#FF6B6B"/>
+  <rect x="16" y="83" width="36" height="2.2" rx="1" fill="#4ECDC4"/>
+  <rect x="16" y="89" width="40" height="2.2" rx="1" fill="#C586C0"/>
+  <rect x="16" y="95" width="38" height="2.2" rx="1" fill="#569CD6"/>
+  <rect x="16" y="101" width="34" height="2.2" rx="1" fill="#DCDCAA"/>
+  <rect x="16" y="107" width="41" height="2.2" rx="1" fill="#CE9178"/>
+  
+  <!-- Generated document (right) -->
+  <rect x="67" y="15" width="53" height="98" rx="3" ry="3" 
+        fill="url(#paperTexture)" filter="url(#shadow3D)"/>
+  
+  <!-- Code lines on generated -->
+  <rect x="72" y="23" width="43" height="2.2" rx="1" fill="#9CDCFE"/>
+  <rect x="72" y="29" width="37" height="2.2" rx="1" fill="#B5CEA8"/>
+  <rect x="72" y="35" width="41" height="2.2" rx="1" fill="#FFD700"/>
+  <rect x="72" y="41" width="39" height="2.2" rx="1" fill="#FF6B6B"/>
+  <rect x="72" y="47" width="35" height="2.2" rx="1" fill="#4ECDC4"/>
+  <rect x="72" y="53" width="42" height="2.2" rx="1" fill="#569CD6"/>
+  <rect x="72" y="59" width="38" height="2.2" rx="1" fill="#CE9178"/>
+  <rect x="72" y="65" width="40" height="2.2" rx="1" fill="#DCDCAA"/>
+  <rect x="72" y="71" width="36" height="2.2" rx="1" fill="#9CDCFE"/>
+  <rect x="72" y="77" width="41" height="2.2" rx="1" fill="#B5CEA8"/>
+  <rect x="72" y="83" width="39" height="2.2" rx="1" fill="#FFD700"/>
+  <rect x="72" y="89" width="37" height="2.2" rx="1" fill="#4ECDC4"/>
+  <rect x="72" y="95" width="43" height="2.2" rx="1" fill="#FF6B6B"/>
+  <rect x="72" y="101" width="40" height="2.2" rx="1" fill="#569CD6"/>
+  <rect x="72" y="107" width="38" height="2.2" rx="1" fill="#C586C0"/>
+  
+  <!-- Elegant bezier curves -->
+  <g stroke-width="1.8" fill="none" opacity="0.5" stroke-linecap="round">
+    <path d="M 56 36 Q 64 36 72 35" stroke="#C586C0"/>
+    <path d="M 54 53 Q 64 55 72 59" stroke="#569CD6"/>
+    <path d="M 58 77 Q 64 82 72 89" stroke="#FF6B6B"/>
+  </g>
+</svg>

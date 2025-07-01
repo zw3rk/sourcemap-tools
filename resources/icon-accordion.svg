@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Background gradient -->
+    <radialGradient id="bgRadial" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0098ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Page sections gradients -->
+    <linearGradient id="page1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="90%" style="stop-color:#fafafa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e0e0e0;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="page2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#e0e0e0;stop-opacity:1" />
+      <stop offset="10%" style="stop-color:#f5f5f5;stop-opacity:1" />
+      <stop offset="90%" style="stop-color:#f5f5f5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d0d0d0;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="page3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#d0d0d0;stop-opacity:1" />
+      <stop offset="10%" style="stop-color:#efefef;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#efefef;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="4"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feFlood flood-color="#000000" flood-opacity="0.4"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="128" height="128" fill="url(#bgRadial)" rx="20" ry="20"/>
+  
+  <!-- Accordion folded map -->
+  <g transform="translate(14, 28)" filter="url(#dropShadow)">
+    <!-- First panel (front) -->
+    <g transform="matrix(1,0,-0.2,1,0,0)">
+      <rect x="0" y="0" width="35" height="72" fill="url(#page1)" rx="2"/>
+      <!-- Code lines -->
+      <rect x="4" y="8" width="24" height="2.5" fill="#569CD6" rx="1"/>
+      <rect x="4" y="13" width="20" height="2.5" fill="#4EC9B0" rx="1"/>
+      <rect x="4" y="18" width="26" height="2.5" fill="#C586C0" rx="1"/>
+      <rect x="4" y="23" width="18" height="2.5" fill="#DCDCAA" rx="1"/>
+      <rect x="4" y="28" width="22" height="2.5" fill="#CE9178" rx="1"/>
+      <rect x="4" y="33" width="25" height="2.5" fill="#569CD6" rx="1"/>
+      <rect x="4" y="38" width="20" height="2.5" fill="#B5CEA8" rx="1"/>
+      <rect x="4" y="43" width="24" height="2.5" fill="#9CDCFE" rx="1"/>
+      <rect x="4" y="48" width="18" height="2.5" fill="#FFD700" rx="1"/>
+      <rect x="4" y="53" width="26" height="2.5" fill="#FF6B6B" rx="1"/>
+      <rect x="4" y="58" width="22" height="2.5" fill="#4ECDC4" rx="1"/>
+      <rect x="4" y="63" width="20" height="2.5" fill="#C586C0" rx="1"/>
+    </g>
+    
+    <!-- Second panel (middle) -->
+    <g transform="translate(32, 0) matrix(1,0,0.15,1,0,0)">
+      <rect x="0" y="0" width="35" height="72" fill="url(#page2)" rx="2"/>
+      <!-- Code lines (slightly faded) -->
+      <rect x="4" y="10" width="22" height="2.5" fill="#9CDCFE" opacity="0.7" rx="1"/>
+      <rect x="4" y="15" width="26" height="2.5" fill="#FFD700" opacity="0.7" rx="1"/>
+      <rect x="4" y="20" width="20" height="2.5" fill="#4ECDC4" opacity="0.7" rx="1"/>
+      <rect x="4" y="25" width="24" height="2.5" fill="#FF6B6B" opacity="0.7" rx="1"/>
+      <rect x="4" y="30" width="18" height="2.5" fill="#569CD6" opacity="0.7" rx="1"/>
+      <rect x="4" y="35" width="26" height="2.5" fill="#B5CEA8" opacity="0.7" rx="1"/>
+      <rect x="4" y="40" width="22" height="2.5" fill="#C586C0" opacity="0.7" rx="1"/>
+      <rect x="4" y="45" width="20" height="2.5" fill="#DCDCAA" opacity="0.7" rx="1"/>
+      <rect x="4" y="50" width="24" height="2.5" fill="#4EC9B0" opacity="0.7" rx="1"/>
+      <rect x="4" y="55" width="18" height="2.5" fill="#CE9178" opacity="0.7" rx="1"/>
+      <rect x="4" y="60" width="22" height="2.5" fill="#9CDCFE" opacity="0.7" rx="1"/>
+    </g>
+    
+    <!-- Third panel (back) -->
+    <g transform="translate(65, 0) matrix(1,0,-0.1,1,0,0)">
+      <rect x="0" y="0" width="35" height="72" fill="url(#page3)" rx="2"/>
+      <!-- Code lines (more faded) -->
+      <rect x="4" y="12" width="20" height="2.5" fill="#FFD700" opacity="0.5" rx="1"/>
+      <rect x="4" y="17" width="24" height="2.5" fill="#4ECDC4" opacity="0.5" rx="1"/>
+      <rect x="4" y="22" width="18" height="2.5" fill="#FF6B6B" opacity="0.5" rx="1"/>
+      <rect x="4" y="27" width="22" height="2.5" fill="#569CD6" opacity="0.5" rx="1"/>
+      <rect x="4" y="32" width="26" height="2.5" fill="#B5CEA8" opacity="0.5" rx="1"/>
+      <rect x="4" y="37" width="20" height="2.5" fill="#C586C0" opacity="0.5" rx="1"/>
+      <rect x="4" y="42" width="24" height="2.5" fill="#DCDCAA" opacity="0.5" rx="1"/>
+      <rect x="4" y="47" width="18" height="2.5" fill="#4EC9B0" opacity="0.5" rx="1"/>
+      <rect x="4" y="52" width="22" height="2.5" fill="#CE9178" opacity="0.5" rx="1"/>
+      <rect x="4" y="57" width="26" height="2.5" fill="#9CDCFE" opacity="0.5" rx="1"/>
+    </g>
+    
+    <!-- Connection lines between panels -->
+    <g stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round">
+      <path d="M 28 28 Q 45 30 52 32" stroke="#FFD700"/>
+      <path d="M 28 43 Q 45 45 52 47" stroke="#4ECDC4"/>
+      <path d="M 28 58 Q 45 60 52 62" stroke="#FF6B6B"/>
+      
+      <path d="M 60 32 Q 75 34 82 36" stroke="#FFD700"/>
+      <path d="M 60 47 Q 75 49 82 51" stroke="#4ECDC4"/>
+    </g>
+  </g>
+  
+  <!-- Small mapping indicator -->
+  <g transform="translate(96, 96)">
+    <rect x="0" y="0" width="24" height="24" rx="4" fill="#ffffff" opacity="0.9"/>
+    <path d="M 6 12 L 18 12 M 12 7 L 12 12 L 9 9 M 12 12 L 9 15" 
+          stroke="#007ACC" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

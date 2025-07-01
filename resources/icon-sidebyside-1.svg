@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient for VSCode blue background -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0098ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Drop shadow -->
+    <filter id="dropShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="128" height="128" fill="url(#bgGradient)" rx="20" ry="20"/>
+  
+  <!-- Source document (left) -->
+  <rect x="10" y="14" width="54" height="100" rx="3" ry="3" 
+        fill="#ffffff" filter="url(#dropShadow)"/>
+  
+  <!-- Code lines on source -->
+  <rect x="15" y="22" width="38" height="2.5" rx="1" fill="#569CD6"/>
+  <rect x="15" y="28" width="32" height="2.5" rx="1" fill="#4EC9B0"/>
+  <rect x="15" y="34" width="40" height="2.5" rx="1" fill="#C586C0"/>
+  <rect x="15" y="40" width="28" height="2.5" rx="1" fill="#DCDCAA"/>
+  <rect x="15" y="46" width="36" height="2.5" rx="1" fill="#CE9178"/>
+  <rect x="15" y="52" width="42" height="2.5" rx="1" fill="#569CD6"/>
+  <rect x="15" y="58" width="30" height="2.5" rx="1" fill="#B5CEA8"/>
+  <rect x="15" y="64" width="38" height="2.5" rx="1" fill="#9CDCFE"/>
+  <rect x="15" y="70" width="34" height="2.5" rx="1" fill="#FFD700"/>
+  <rect x="15" y="76" width="40" height="2.5" rx="1" fill="#FF6B6B"/>
+  <rect x="15" y="82" width="28" height="2.5" rx="1" fill="#4ECDC4"/>
+  <rect x="15" y="88" width="36" height="2.5" rx="1" fill="#C586C0"/>
+  <rect x="15" y="94" width="42" height="2.5" rx="1" fill="#569CD6"/>
+  <rect x="15" y="100" width="32" height="2.5" rx="1" fill="#DCDCAA"/>
+  <rect x="15" y="106" width="38" height="2.5" rx="1" fill="#CE9178"/>
+  
+  <!-- Generated document (right) -->
+  <rect x="68" y="14" width="54" height="100" rx="3" ry="3" 
+        fill="#ffffff" filter="url(#dropShadow)"/>
+  
+  <!-- Code lines on generated -->
+  <rect x="73" y="22" width="42" height="2.5" rx="1" fill="#9CDCFE"/>
+  <rect x="73" y="28" width="36" height="2.5" rx="1" fill="#B5CEA8"/>
+  <rect x="73" y="34" width="38" height="2.5" rx="1" fill="#FFD700"/>
+  <rect x="73" y="40" width="40" height="2.5" rx="1" fill="#FF6B6B"/>
+  <rect x="73" y="46" width="32" height="2.5" rx="1" fill="#4ECDC4"/>
+  <rect x="73" y="52" width="44" height="2.5" rx="1" fill="#569CD6"/>
+  <rect x="73" y="58" width="38" height="2.5" rx="1" fill="#CE9178"/>
+  <rect x="73" y="64" width="36" height="2.5" rx="1" fill="#DCDCAA"/>
+  <rect x="73" y="70" width="40" height="2.5" rx="1" fill="#9CDCFE"/>
+  <rect x="73" y="76" width="34" height="2.5" rx="1" fill="#B5CEA8"/>
+  <rect x="73" y="82" width="42" height="2.5" rx="1" fill="#FFD700"/>
+  <rect x="73" y="88" width="38" height="2.5" rx="1" fill="#4ECDC4"/>
+  <rect x="73" y="94" width="36" height="2.5" rx="1" fill="#FF6B6B"/>
+  <rect x="73" y="100" width="44" height="2.5" rx="1" fill="#569CD6"/>
+  <rect x="73" y="106" width="40" height="2.5" rx="1" fill="#C586C0"/>
+  
+  <!-- Connection bezier curves (thin) -->
+  <g stroke-width="1.5" fill="none" opacity="0.6" stroke-linecap="round">
+    <path d="M 53 35 Q 66 35 73 35" stroke="#FFD700"/>
+    <path d="M 57 53 Q 66 56 73 59" stroke="#4ECDC4"/>
+    <path d="M 50 77 Q 66 80 73 94" stroke="#FF6B6B"/>
+  </g>
+</svg>
