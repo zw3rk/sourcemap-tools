@@ -16,6 +16,10 @@ shell.nix
 # Development documentation
 docs/development/**
 CLAUDE.md
+PUBLISHING.md
+RELEASE_PREPARATION_SUMMARY.md
+USAGE.md
+resources/ARTWORK_REQUIREMENTS.md
 
 # Development artifacts
 .claude/**

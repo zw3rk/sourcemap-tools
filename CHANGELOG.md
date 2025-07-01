@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.0.3] - 2025-01-01
+
+### Added
+- Automated VSCode marketplace publishing via GitHub Actions
+- Release verification scripts to prevent missing files
+- Comprehensive release documentation and guides
+- Setup helper script for marketplace configuration
+
+### Changed
+- Improved release workflow with automated checks
+- Enhanced documentation structure for development processes
+
+### Internal
+- Added development-only scripts for release verification
+- Improved separation between development and production branches
+
 ## [1.0.2] - 2025-01-01
 
 ### Fixed
