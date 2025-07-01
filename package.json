@@ -2,7 +2,7 @@
   "name": "source-map-visualizer",
   "displayName": "Source Map Visualizer",
   "description": "Advanced source map visualization and visual mapping editor for VSCode",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.74.0"
   },

@@ -1,6 +1,5 @@
 export interface DescHeader {
     input: string;
-    version: string;
     comments: string[];
 }
 
@@ -34,7 +33,6 @@ export class DescParser {
         // Parse header
         const header: DescHeader = {
             input: '',
-            version: '',
             comments: []
         };
         
@@ -43,10 +41,15 @@ export class DescParser {
             
             if (line.startsWith('INPUT:')) {
                 header.input = line.substring(6).trim();
-            } else if (line === 'VERSION') {
+                // Skip all content until OUTPUT: or mapping lines starting with [
                 i++;
-                if (i < lines.length && lines[i]) {
-                    header.version = lines[i]!.trim();
+                while (i < lines.length) {
+                    const nextLine = lines[i]?.trim() || '';
+                    if (nextLine.startsWith('OUTPUT:') || nextLine.startsWith('[')) {
+                        i--; // Back up one line so the main loop can process it
+                        break;
+                    }
+                    i++;
                 }
             } else if (line.startsWith('--')) {
                 header.comments.push(line.substring(2).trim());
@@ -68,10 +71,14 @@ export class DescParser {
             output.filename = outputLine.substring(7).trim();
             i++;
             
-            // Collect output content until we hit the mapping comment
+            // Collect output content until we hit the mapping comment or mapping lines
             const outputLines: string[] = [];
-            while (i < lines.length && lines[i] && !lines[i]!.includes('1-based absolute indices')) {
-                outputLines.push(lines[i]!);
+            while (i < lines.length && lines[i]) {
+                const currentLine = lines[i]!;
+                if (currentLine.includes('1-based') || currentLine.trim().startsWith('[')) {
+                    break;
+                }
+                outputLines.push(currentLine);
                 i++;
             }
             output.content = outputLines.join('\n').trim();
@@ -154,8 +161,7 @@ export class DescParser {
         
         // Header
         lines.push(`INPUT: ${desc.header.input}`);
-        lines.push('VERSION');
-        lines.push(desc.header.version);
+        lines.push('');
         desc.header.comments.forEach(comment => {
             lines.push(`-- ${comment}`);
         });
@@ -165,7 +171,7 @@ export class DescParser {
         lines.push(`OUTPUT: ${desc.output.filename}`);
         lines.push(desc.output.content);
         lines.push('');
-        lines.push('# 1-based absolute indices, will need to be converted to 0-based VLQ encoded "mappings".');
+        lines.push('# Mappings use 1-based indices');
         
         // Mappings
         desc.mappings.forEach(mapping => {

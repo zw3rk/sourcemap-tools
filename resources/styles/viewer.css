@@ -118,6 +118,12 @@ body {
     white-space: pre;
 }
 
+/* Soft wrap for generated code pane to handle long lines */
+#generated-pane .code-content {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 .code-line {
     display: flex;
     min-height: var(--vscode-editor-line-height);

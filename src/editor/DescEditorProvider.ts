@@ -53,7 +53,6 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     descFile = {
                         header: {
                             input: '',
-                            version: '3',
                             comments: []
                         },
                         output: {
@@ -65,7 +64,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     
                     // Initialize the document with basic structure
                     const edit = new vscode.WorkspaceEdit();
-                    const template = `INPUT: \nVERSION\n3\nOUTPUT: \n\n-- genLine:genCol -> srcIdx:srcLine:srcCol:semanticType // 1-based absolute indices\n`;
+                    const template = `INPUT: \n\nOUTPUT: \n\n# Mappings use 1-based indices\n[gen-col,src-idx,src-line,src-col,TYPE] -- optional comment\n[-] -- line break marker\n`;
                     edit.insert(document.uri, new vscode.Position(0, 0), template);
                     await vscode.workspace.applyEdit(edit);
                     return;

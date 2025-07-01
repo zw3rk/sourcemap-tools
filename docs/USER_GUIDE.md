@@ -63,7 +63,7 @@ The visual editor for `.desc` files allows you to create and edit source map des
 The extension supports various file types:
 - **Source maps**: `.map` files (standard v3 format)
 - **Descriptions**: `.desc` files (human-readable format)
-- **Source files**: `.js`, `.ts`, `.uwu`, `.cabol`, `.uplc`, and any custom extensions
+- **Source files**: `.js`, `.ts`, `.uwu`, `.uplc`, and any custom extensions
 
 ### 4. Toggle Between Views
 

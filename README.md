@@ -25,7 +25,7 @@ Advanced source map visualization and visual mapping editor for Visual Studio Co
 - **Export to .map**: Convert human-readable `.desc` files to standard source maps
 
 ### 🎯 Additional Features
-- **File Type Agnostic**: Works with any file type (.js, .ts, .uwu, .cabol, .uplc, etc.)
+- **File Type Agnostic**: Works with any file type (.js, .ts, .uwu, .uplc, etc.)
 - **Toggle Views**: Easy switching between visual and text editor modes
 - **Browse Integration**: File browser buttons for easy file selection
 - **Performance Optimized**: Handles large files with virtualization
