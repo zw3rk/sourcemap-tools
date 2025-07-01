@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.4] - 2025-01-01
+
+### Fixed
+- Corrected repository URL in package.json (removed duplicate entry)
+- Fixed marketplace URLs in README badges to use correct extension ID
+- Removed reference to non-existent demo.gif
+
+### Added
+- Sponsor button configuration for VSCode Marketplace
+
 ## [1.0.3] - 2025-01-01
 
 ### Added

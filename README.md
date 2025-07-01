@@ -1,12 +1,10 @@
 # Source Map Visualizer
 
-[![Version](https://img.shields.io/visual-studio-marketplace/v/zw3rk.sourcemap-visualizer)](https://marketplace.visualstudio.com/items?itemName=zw3rk.sourcemap-visualizer)
-[![Downloads](https://img.shields.io/visual-studio-marketplace/d/zw3rk.sourcemap-visualizer)](https://marketplace.visualstudio.com/items?itemName=zw3rk.sourcemap-visualizer)
+[![Version](https://img.shields.io/visual-studio-marketplace/v/zw3rk.source-map-visualizer)](https://marketplace.visualstudio.com/items?itemName=zw3rk.source-map-visualizer)
+[![Downloads](https://img.shields.io/visual-studio-marketplace/d/zw3rk.source-map-visualizer)](https://marketplace.visualstudio.com/items?itemName=zw3rk.source-map-visualizer)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 Advanced source map visualization and visual mapping editor for Visual Studio Code.
-
-![Source Map Visualizer Demo](resources/demo.gif)
 
 ## Features
 

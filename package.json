@@ -2,7 +2,7 @@
   "name": "source-map-visualizer",
   "displayName": "Source Map Visualizer",
   "description": "Advanced source map visualization and visual mapping editor for VSCode",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -47,9 +47,8 @@
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/zw3rk/src-map-viz"
+  "sponsor": {
+    "url": "https://github.com/sponsors/zw3rk"
   },
   "contributes": {
     "commands": [
