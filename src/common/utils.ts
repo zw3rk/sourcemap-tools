@@ -15,18 +15,16 @@ export function getNonce(): string {
 /**
  * Debounce function for performance optimization
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
     func: T,
     wait: number
 ): (...args: Parameters<T>) => void {
     let timeout: NodeJS.Timeout | undefined;
     
-    return function (this: unknown, ...args: Parameters<T>) {
-        const context = this;
-        
-        const later = () => {
+    return function (this: unknown, ...args: Parameters<T>): void {
+        const later = (): void => {
             timeout = undefined;
-            func.apply(context, args);
+            func.apply(this, args);
         };
         
         if (timeout) {

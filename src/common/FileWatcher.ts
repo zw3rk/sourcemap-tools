@@ -62,7 +62,7 @@ export class FileWatcher implements vscode.Disposable {
     ): void {
         const filesToWatch: string[] = [mapFilePath];
         
-        if (generatedFilePath) {
+        if (generatedFilePath !== undefined && generatedFilePath !== null && generatedFilePath !== '') {
             filesToWatch.push(generatedFilePath);
         }
         
@@ -78,7 +78,9 @@ export class FileWatcher implements vscode.Disposable {
      * Clear all watchers
      */
     public clear(): void {
-        this.disposables.forEach(d => d.dispose());
+        this.disposables.forEach(d => {
+            d.dispose();
+        });
         this.disposables = [];
         this.watchers.clear();
     }

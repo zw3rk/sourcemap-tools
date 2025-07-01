@@ -47,7 +47,7 @@ export function decodeVLQ(encoded: string): number[] {
         
         while (continuation) {
             const char = encoded[i++];
-            if (!char) {
+            if (char === undefined) {
                 throw new Error('Unexpected end of VLQ string');
             }
             const digit = BASE64_CHARS.indexOf(char);

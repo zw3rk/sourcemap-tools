@@ -9,7 +9,7 @@ export class Logger {
     }
     
     static getInstance(): Logger {
-        if (!Logger.instance) {
+        if (Logger.instance === undefined) {
             Logger.instance = new Logger();
         }
         return Logger.instance;
@@ -34,10 +34,10 @@ export class Logger {
         const formattedMessage = `[${timestamp}] ERROR: ${message}`;
         this.outputChannel.appendLine(formattedMessage);
         
-        if (error) {
+        if (error !== undefined && error !== null) {
             if (error instanceof Error) {
                 this.outputChannel.appendLine(`  ${error.message}`);
-                if (error.stack) {
+                if (error.stack !== undefined && error.stack !== null && error.stack !== '') {
                     this.outputChannel.appendLine(`  Stack: ${error.stack}`);
                 }
             } else {

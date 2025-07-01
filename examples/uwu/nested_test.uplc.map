@@ -1,9 +1,9 @@
 {
   "version": 3,
-  "file": "nested_test.uplc",
+  "file": "/Users/angerman/Projects/zw3rk/src-map-viz/examples/uwu/nested_test.uplc",
   "sourceRoot": "",
-  "sources": ["nested_test.uwu"],
+  "sources": ["/Users/angerman/Projects/zw3rk/src-map-viz/examples/uwu/nested_test.uwu"],
   "sourcesContent": null,
   "names": ["APP", "INTEGER", "LAM", "PGM", "VER", "addInteger", "x", "y", "z"],
-  "mappings": "AAAAG,SAAAC;EAICJ,CAAAA,CAAAA,EAAAE,I,AAACI,C,EACCJ,I,AAACK,C,EACCL,I,AAACM,C,CACCR,CAAAA,CAAAK,oBACCL,CAACA,CAAAA,CAAAK,oBAAUL,CAACM,CAADN,CAAEA,CAACO,CAADP,CAAbA,CACDA,CAACQ,CAADR,CAHDE,CADFA,CADFA,CAMDF,CAACC,eAADD,CACAA,CAACC,gBAADD,CACAA,CAACC,gBAADD;AAZDG"
+  "mappings": "AAAAG,SAAAC;EAYCJ,CADAA,CADAA,EANAE,I,AAACI,C,EACCJ,I,AAACK,C,EACCL,I,AAACM,C,CAGCR,CADaA,CADbK,oBACaL,CAACA,CAAFA,CAAVK,oBAAUL,CAACM,CAADN,CAAEA,CAACO,CAADP,CAADA,CACbA,CAACQ,CAADR,CAHDE,CADFA,CADFA,CAMDF,CAACC,eAADD,CACAA,CAACC,gBAADD,CACAA,CAACC,gBAADD;AAZDG"
 }

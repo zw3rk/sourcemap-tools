@@ -62,7 +62,9 @@ export class ViewerProvider {
 
         // Handle messages from webview
         this.panel.webview.onDidReceiveMessage(
-            async (message: unknown) => { await this.handleWebviewMessage(message as MessageProtocol); },
+            async (message: unknown) => {
+ await this.handleWebviewMessage(message as MessageProtocol); 
+},
             undefined,
             this.context.subscriptions
         );
@@ -235,7 +237,7 @@ export class ViewerProvider {
     }
     
     private async handleExport(message: MessageProtocol): Promise<void> {
-        const payload = message.payload as unknown as { format?: string; content?: string; filename?: string };
+        const payload = message.payload as { format?: string; content?: string; filename?: string };
         if (payload.format === 'svg' && payload.content) {
             try {
                 const saveUri = await vscode.window.showSaveDialog({
