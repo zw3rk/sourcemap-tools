@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.8] - 2025-01-02
+
+### Added
+- Improved path resolution with suffix matching for self-referential source maps
+- Better handling when source map paths share parent directories with map file location
+
+### Fixed
+- Source maps with paths like "examples/uwu/file.js" now correctly resolve when the map file is in "examples/uwu/"
+- Both generated file and source file resolution now handle shared directory structures
+
 ## [1.0.7] - 2025-01-02
 
 ### Added
