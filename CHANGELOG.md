@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.7] - 2025-01-02
+
+### Added
+- GitHub Sponsors funding configuration
+
+### Internal
+- Added master subset verification to release checklist
+- Cleaned up release process to ensure master is always a true subset of develop
+
 ## [1.0.6] - 2025-01-02
 
 ### Fixed
