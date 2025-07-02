@@ -225,9 +225,9 @@ export class FileService {
      * This helps resolve paths when source map references share structure with map location
      * 
      * @example
-     * mapDir: "/project/dist/examples/uwu"
+     * mapDir: "/Users/test/project/examples/uwu"
      * targetPath: "examples/uwu/arithmetic.js"
-     * returns: { commonSegments: 2, resolvedPath: "/project/dist/examples/uwu/arithmetic.js" }
+     * returns: { commonSegments: 2, resolvedPath: "/Users/test/project/examples/uwu/arithmetic.js" }
      */
     private findCommonPathSuffix(
         mapDir: string,
@@ -240,7 +240,6 @@ export class FileService {
         
         // Remove filename from target path to get directory segments only
         const targetDirSegments = targetSegments.slice(0, -1);
-        const targetFilename = targetSegments[targetSegments.length - 1];
         
         if (targetDirSegments.length === 0) {
             return { commonSegments: 0, resolvedPath: '' };
@@ -262,10 +261,13 @@ export class FileService {
         }
         
         // If we found matching suffix, resolve the path
-        if (matchCount > 0 && matchCount === targetDirSegments.length) {
-            // All directory segments of target match the suffix of mapDir
-            // The resolved path is mapDir + filename
-            const resolvedPath = path.join(mapDir, targetFilename || '');
+        if (matchCount > 0) {
+            // We need to go up from mapDir by the number of matched segments
+            // then append the full target path
+            const mapDirSegments = mapDir.split(path.sep).filter(s => s !== '');
+            const baseSegments = mapDirSegments.slice(0, mapDirSegments.length - matchCount);
+            const basePath = baseSegments.length > 0 ? path.sep + path.join(...baseSegments) : path.sep;
+            const resolvedPath = path.join(basePath, targetPath);
             return { commonSegments: matchCount, resolvedPath };
         }
         

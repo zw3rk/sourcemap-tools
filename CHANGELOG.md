@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9] - 2025-01-02
+
+### Fixed
+- Fixed path resolution to correctly handle self-referential paths without creating duplicate directory segments
+- Source maps with paths like "examples/uwu/file.js" now correctly resolve when map file is in matching directory structure
+
 ## [1.0.8] - 2025-01-02
 
 ### Added
