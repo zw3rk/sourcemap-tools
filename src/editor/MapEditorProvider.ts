@@ -1,14 +1,10 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { MessageProtocol } from '../common/MessageProtocol';
-import { getNonce } from '../common/utils';
-import { SourcemapParser } from '../viewer/SourcemapParser';
-import { PathResolver } from '../viewer/PathResolver';
-import { FileLoader } from '../viewer/FileLoader';
-import { FileWatcher } from '../common/FileWatcher';
-import { Logger } from '../common/logger';
+import { BaseWebviewProvider, WebviewConfig } from '../common/BaseWebviewProvider';
+import { debounce } from '../common/utils';
+import { VIEW_TYPES, DEFAULTS, COMMANDS } from '../common/constants';
 
-export class MapEditorProvider implements vscode.CustomTextEditorProvider {
+export class MapEditorProvider extends BaseWebviewProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
         const provider = new MapEditorProvider(context);
         const providerRegistration = vscode.window.registerCustomEditorProvider(
@@ -24,112 +20,72 @@ export class MapEditorProvider implements vscode.CustomTextEditorProvider {
         return providerRegistration;
     }
 
-    public static readonly viewType = 'src-map-viz.mapEditor';
-
-    private parser: SourcemapParser;
-    private fileLoader: FileLoader;
-    private fileWatcher: FileWatcher | undefined;
-
-    constructor(
-        private readonly context: vscode.ExtensionContext
-    ) {
-        this.parser = new SourcemapParser();
-        this.fileLoader = new FileLoader();
-    }
+    public static readonly viewType = VIEW_TYPES.MAP_EDITOR;
 
     public async resolveCustomTextEditor(
         document: vscode.TextDocument,
         webviewPanel: vscode.WebviewPanel,
         _token: vscode.CancellationToken
     ): Promise<void> {
-        const logger = Logger.getInstance();
-        logger.log('Resolving custom editor for .map file', document.uri.toString());
+        this.logger.log('Resolving custom editor for .map file', document.uri.toString());
 
-        webviewPanel.webview.options = {
-            enableScripts: true,
-            localResourceRoots: [
-                vscode.Uri.joinPath(this.context.extensionUri, 'out'),
-                vscode.Uri.joinPath(this.context.extensionUri, 'resources'),
-                vscode.Uri.file(path.dirname(document.uri.fsPath))
-            ]
+        webviewPanel.webview.options = this.getWebviewOptions(document.uri);
+
+        const config: WebviewConfig = {
+            viewType: MapEditorProvider.viewType,
+            scriptPath: 'viewer/index.js',
+            stylePath: 'viewer.css',
+            title: 'Source Map Visualizer'
         };
-
-        webviewPanel.webview.html = this.getHtmlContent(webviewPanel.webview);
+        webviewPanel.webview.html = this.getHtmlContent(webviewPanel.webview, config);
 
         const updateWebview = async (): Promise<void> => {
             try {
-                // Clear file loader cache for fresh reload
-                this.fileLoader.clearCache();
-
-                // Parse the source map
+                // Parse and load the source map
                 const sourcemapText = document.getText();
-                const parsedMap = await this.parser.parse(sourcemapText);
-                
-                // Create path resolver
-                const resolver = new PathResolver(document.uri);
-                
-                // Resolve file paths
-                const generatedPath = resolver.resolveGeneratedFile(parsedMap.file);
-                const sourcePaths = parsedMap.sources.map((source, index) => ({
-                    original: source,
-                    resolved: resolver.resolve(source, parsedMap.sourceRoot),
-                    embeddedContent: parsedMap.sourcesContent?.[index]
-                }));
-                
-                // Load generated file if available
-                let generatedContent: string | undefined;
-                if (generatedPath !== undefined) {
-                    const genFile = await this.fileLoader.loadFile(generatedPath);
-                    if (genFile.exists) {
-                        generatedContent = genFile.content;
-                    }
-                }
-                
-                // Load first source file
-                let sourceContent: string | undefined;
-                if (sourcePaths.length > 0) {
-                    const firstSource = sourcePaths[0];
-                    if (firstSource) {
-                        const srcFile = await this.fileLoader.loadSourceContent(
-                            firstSource.resolved,
-                            firstSource.embeddedContent
-                        );
-                        if (srcFile.exists) {
-                            sourceContent = srcFile.content;
-                        }
-                    }
-                }
+                const data = await this.loadAndParseSourceMap(document.uri, sourcemapText);
 
                 // Send parsed data to webview
                 void webviewPanel.webview.postMessage({
                     command: 'loadSourcemap',
                     sourcemapPath: document.uri.fsPath,
-                    payload: {
-                        parsedMap,
-                        generatedPath,
-                        generatedContent,
-                        sourcePaths,
-                        sourceContent,
-                        firstSourcePath: sourcePaths[0]?.resolved
-                    }
+                    payload: data
                 } as MessageProtocol);
                 
                 // Set up file watching if auto-reload is enabled
                 const config = vscode.workspace.getConfiguration('sourcemap-visualizer');
-                const autoReload = config.get<boolean>('autoReload', true);
+                const autoReload = config.get<boolean>('autoReload', DEFAULTS.AUTO_RELOAD);
                 
                 if (autoReload) {
                     this.setupFileWatching(
                         document.uri.fsPath,
-                        generatedPath,
-                        sourcePaths.map(sp => sp.resolved),
-                        webviewPanel,
-                        document.uri
+                        data.generatedPath,
+                        data.sourcePaths.map(sp => sp.resolved),
+                        async () => {
+                            // Reload the document and update webview
+                            try {
+                                await vscode.workspace.openTextDocument(document.uri);
+                                // Trigger update through the document change event
+                                const edit = new vscode.WorkspaceEdit();
+                                // Add and immediately remove a space to trigger change event
+                                edit.insert(document.uri, new vscode.Position(0, 0), ' ');
+                                await vscode.workspace.applyEdit(edit);
+                                const edit2 = new vscode.WorkspaceEdit();
+                                edit2.delete(document.uri, new vscode.Range(0, 0, 0, 1));
+                                await vscode.workspace.applyEdit(edit2);
+                            } catch (error) {
+                                // If document editing fails, just ignore
+                            }
+                        }
                     );
                 }
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                logger.log('Failed to load sourcemap', errorMessage);
+                
+                this.errorHandler.handleError(error, {
+                    operation: 'Loading source map in editor',
+                    details: { documentUri: document.uri.toString() }
+                });
                 
                 void webviewPanel.webview.postMessage({
                     command: 'error',
@@ -141,157 +97,84 @@ export class MapEditorProvider implements vscode.CustomTextEditorProvider {
         // Handle messages from webview
         webviewPanel.webview.onDidReceiveMessage(
             async message => {
-                logger.log('Received message from webview', message.command);
-                
-                switch (message.command) {
-                    case 'ready':
-                        await updateWebview();
-                        break;
-                    case 'error':
-                        logger.log('Error from webview', message.error);
-                        break;
-                    case 'log':
-                        if (message.data) {
-                            logger.log(message.message, message.data);
-                        } else {
-                            logger.log(message.message);
-                        }
-                        break;
-                    case 'openFile':
-                        if (message.path) {
-                            try {
-                                const fileUri = vscode.Uri.file(message.path);
-                                const doc = await vscode.workspace.openTextDocument(fileUri);
-                                await vscode.window.showTextDocument(doc, {
-                                    viewColumn: vscode.ViewColumn.Two,
-                                    preserveFocus: true,
-                                    selection: message.selection
-                                });
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Failed to open file: ${message.path}`);
-                            }
-                        }
-                        break;
-                    case 'openInTextEditor':
-                        // Open the current .map file in text editor
-                        await vscode.commands.executeCommand('workbench.action.reopenTextEditor', document.uri);
-                        break;
-                }
+                await this.handleWebviewMessage(message, document);
             },
             undefined,
             this.context.subscriptions
         );
 
+        // Create debounced update function
+        const debouncedUpdate = debounce(updateWebview, DEFAULTS.DEBOUNCE_TIME);
+
         // Update webview when document changes (if user edits the .map file externally)
-        const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async e => {
+        const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
             if (e.document.uri.toString() === document.uri.toString()) {
-                // Debounce rapid changes
-                if ((webviewPanel as any).updateTimer) {
-                    clearTimeout((webviewPanel as any).updateTimer);
-                }
-                (webviewPanel as any).updateTimer = setTimeout(async () => {
-                    await updateWebview();
-                }, 300);
+                debouncedUpdate();
             }
         });
 
         // Clean up
         webviewPanel.onDidDispose(() => {
             changeDocumentSubscription.dispose();
-            this.fileWatcher?.dispose();
-            this.fileWatcher = undefined;
+            this.fileWatcherDisposable?.dispose();
+            this.fileWatcherDisposable = undefined;
         });
 
         // Initial update
         await updateWebview();
     }
-    
-    private setupFileWatching(
-        mapFilePath: string,
-        generatedFilePath: string | undefined,
-        sourceFilePaths: string[],
-        _webviewPanel: vscode.WebviewPanel,
-        documentUri: vscode.Uri
-    ) {
-        // Dispose existing watcher
-        this.fileWatcher?.dispose();
+
+    private async handleWebviewMessage(message: MessageProtocol, document: vscode.TextDocument): Promise<void> {
+        this.logger.log('Received message from webview', message.command);
         
-        // Create new watcher
-        this.fileWatcher = new FileWatcher(async () => {
-            // Reload the document and update webview
-            try {
-                await vscode.workspace.openTextDocument(documentUri);
-                // Trigger update through the document change event
-                const edit = new vscode.WorkspaceEdit();
-                // Add and immediately remove a space to trigger change event
-                edit.insert(documentUri, new vscode.Position(0, 0), ' ');
-                await vscode.workspace.applyEdit(edit);
-                const edit2 = new vscode.WorkspaceEdit();
-                edit2.delete(documentUri, new vscode.Range(0, 0, 0, 1));
-                await vscode.workspace.applyEdit(edit2);
-            } catch (error) {
-                // If document editing fails, just ignore
-            }
-        });
-        
-        this.fileWatcher.watchSourceMap(mapFilePath, generatedFilePath, sourceFilePaths);
-        
-        // Add to subscriptions for cleanup
-        this.context.subscriptions.push(this.fileWatcher);
+        // Handle common messages first
+        if (this.handleCommonMessages(message)) {
+            return;
+        }
+
+        switch (message.command) {
+            case 'ready':
+                // Webview is ready - initial update already done
+                break;
+            case 'openFile':
+                const openFileMsg = message as any;
+                if (openFileMsg.path) {
+                    await this.openFileInEditor(openFileMsg.path, openFileMsg.selection);
+                }
+                break;
+            case 'openInTextEditor':
+                // Open the current .map file in text editor
+                await vscode.commands.executeCommand(COMMANDS.OPEN_IN_TEXT_EDITOR, document.uri);
+                break;
+            default:
+                console.warn('Unknown message command:', message.command);
+        }
     }
 
-    private getHtmlContent(webview: vscode.Webview): string {
-        const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview', 'viewer', 'index.js')
-        );
-        
-        const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'viewer.css')
-        );
-
-        const codiconsUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css')
-        );
-
-        const nonce = getNonce();
-
-        return `<!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">
-                <link href="${codiconsUri}" rel="stylesheet">
-                <link href="${styleUri}" rel="stylesheet">
-                <title>Source Map Visualizer</title>
-            </head>
-            <body>
-                <div id="container">
-                    <div id="viewer">
-                        <div id="source-pane" class="code-pane">
-                            <div class="pane-header">Source</div>
-                            <pre id="source-content" class="code-content">Loading source file...</pre>
-                        </div>
-                        <svg id="connections" class="connection-layer"></svg>
-                        <div id="generated-pane" class="code-pane">
-                            <div class="pane-header">Generated</div>
-                            <pre id="generated-content" class="code-content">Loading generated file...</pre>
-                        </div>
-                    </div>
-                    <div id="legend-panel" class="legend-panel collapsed">
-                        <div class="legend-header">
-                            <span>Segment Mappings</span>
-                            <button id="toggle-legend" class="toggle-button">▼</button>
-                        </div>
-                        <div id="legend-content" class="legend-content"></div>
-                    </div>
-                    <div id="status-bar">
-                        <span id="status-text">Ready</span>
-                        <span id="mapping-stats" class="mapping-stats"></span>
-                    </div>
-                </div>
-                <script nonce="${nonce}" src="${scriptUri}"></script>
-            </body>
-            </html>`;
+    protected getBodyContent(): string {
+        return `<div id="container">
+        <div id="viewer">
+            <div id="source-pane" class="code-pane">
+                <div class="pane-header">Source</div>
+                <pre id="source-content" class="code-content">Loading source file...</pre>
+            </div>
+            <svg id="connections" class="connection-layer"></svg>
+            <div id="generated-pane" class="code-pane">
+                <div class="pane-header">Generated</div>
+                <pre id="generated-content" class="code-content">Loading generated file...</pre>
+            </div>
+        </div>
+        <div id="legend-panel" class="legend-panel collapsed">
+            <div class="legend-header">
+                <span>Segment Mappings</span>
+                <button id="toggle-legend" class="toggle-button">▼</button>
+            </div>
+            <div id="legend-content" class="legend-content"></div>
+        </div>
+        <div id="status-bar">
+            <span id="status-text">Ready</span>
+            <span id="mapping-stats" class="mapping-stats"></span>
+        </div>
+    </div>`;
     }
 }

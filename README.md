@@ -115,7 +115,6 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 - 📖 [User Guide](docs/USER_GUIDE.md)
 - 🐛 [Report Issues](https://github.com/zw3rk/sourcemap-tools/issues)
-- 💬 [Discussions](https://github.com/zw3rk/sourcemap-tools/discussions)
 
 ## License
 
@@ -123,4 +122,4 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ---
 
-Made with ❤️ by [zw3rk pte. ltd.](https://zw3rk.com)
+Made with ❤️ in 🇸🇬 Singapore by [zw3rk pte. ltd.](https://zw3rk.com)

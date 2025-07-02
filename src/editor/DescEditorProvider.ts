@@ -4,26 +4,12 @@ import * as fs from 'fs';
 import { DescParser, DescFile } from './DescParser';
 import { encodeVLQArray } from '../common/vlq';
 import { Logger } from '../common/logger';
-
-interface WebviewMessage {
-    type: string;
-    message?: string;
-    data?: unknown;
-    mapping?: {
-        genLine: number;
-        genCol: number;
-        srcLine: number;
-        srcCol: number;
-        semanticType: string;
-    };
-    index?: number;
-    mappings?: unknown[];
-    path?: string;
-    action?: string;
-    descriptor?: string;
-    line?: number;
-    value?: string;
-}
+import { getNonce } from '../common/utils';
+import { 
+    UpdateDescMessage,
+    ErrorDescMessage,
+    SourceMapV3
+} from '../common/DescEditorMessages';
 
 export class DescEditorProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
@@ -103,22 +89,39 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     }
                 }
                 
-                void webviewPanel.webview.postMessage({
+                // Load output file content if it exists
+                let outputContent = '';
+                if (descFile.output.filename) {
+                    const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.output.filename);
+                    try {
+                        outputContent = await fs.promises.readFile(outputPath, 'utf-8');
+                        // Override the desc file's embedded content with the actual file content
+                        descFile.output.content = outputContent;
+                    } catch (err) {
+                        console.warn(`Could not load output file: ${outputPath}`);
+                        // Fall back to embedded content if file doesn't exist
+                        outputContent = descFile.output.content || '';
+                    }
+                }
+                
+                const updateMsg: UpdateDescMessage = {
                     type: 'update',
                     desc: descFile,
                     sourceContent,
                     documentUri: document.uri.toString()
-                });
+                };
+                void webviewPanel.webview.postMessage(updateMsg);
             } catch (error) {
-                void webviewPanel.webview.postMessage({
+                const errorMsg: ErrorDescMessage = {
                     type: 'error',
                     message: `Failed to parse .desc file: ${String(error)}`
-                });
+                };
+                void webviewPanel.webview.postMessage(errorMsg);
             }
         };
 
         // Handle messages from the webview
-        webviewPanel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+        webviewPanel.webview.onDidReceiveMessage(async (message: any) => {
             const logger = Logger.getInstance();
             
             switch (message.type) {
@@ -375,7 +378,7 @@ return a.genLine - b.genLine;
                                         const srcIdx = 1; // TODO: Support multiple source files
                                         const mappingText = mapping.srcLine === 0 
                                             ? `[${mapping.genCol}]`
-                                            : `[${mapping.genCol},${srcIdx},${mapping.srcLine},${mapping.srcCol},${mapping.semanticType || 'UNKNOWN'}]`;
+                                            : `[${mapping.genCol},${srcIdx},${mapping.srcLine},${mapping.srcCol},${mapping.semanticType ?? 'UNKNOWN'}]`;
                                         mappingLines.push(mappingText);
                                     }
                                     
@@ -457,7 +460,7 @@ break;
                         }
                         
                         // If OUTPUT filename changed and file exists, load its content
-                        if (message.value && outputLineIndex >= 0 && contentStartIndex >= 0) {
+                        if (message.value !== null && message.value !== undefined && message.value !== '' && outputLineIndex >= 0 && contentStartIndex >= 0) {
                             try {
                                 const outputPath = path.resolve(path.dirname(document.uri.fsPath), message.value);
                                 const outputContent = await fs.promises.readFile(outputPath, 'utf-8');
@@ -523,7 +526,7 @@ break;
                     break;
                 }
                 
-                case 'exportSourceMap':
+                case 'exportToSourceMap':
                     if (descFile) {
                         await this.exportToSourceMap(descFile, document.uri, webviewPanel);
                     }
@@ -537,20 +540,26 @@ break;
         });
 
         // Update webview when document changes
-        const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(async e => {
+        // Track the update timer
+        let updateTimer: NodeJS.Timeout | undefined;
+        
+        const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
             if (e.document.uri.toString() === document.uri.toString()) {
                 // Debounce rapid changes to avoid excessive updates
-                if ((webviewPanel as any).updateTimer) {
-                    clearTimeout((webviewPanel as any).updateTimer);
+                if (updateTimer) {
+                    clearTimeout(updateTimer);
                 }
-                (webviewPanel as any).updateTimer = setTimeout(async () => {
-                    await updateWebview();
+                updateTimer = setTimeout(() => {
+                    void updateWebview();
                 }, 100);
             }
         });
 
         // Clean up
         webviewPanel.onDidDispose(() => {
+            if (updateTimer) {
+                clearTimeout(updateTimer);
+            }
             changeDocumentSubscription.dispose();
         });
 
@@ -572,7 +581,7 @@ break;
             vscode.Uri.file(path.join(this.context.extensionPath, 'node_modules', '@vscode', 'codicons', 'dist', 'codicon.css'))
         );
 
-        const nonce = this.getNonce();
+        const nonce = getNonce();
 
         return `<!DOCTYPE html>
             <html lang="en">
@@ -596,14 +605,6 @@ break;
             </html>`;
     }
 
-    private getNonce(): string {
-        let text = '';
-        const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-        for (let i = 0; i < 32; i++) {
-            text += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        return text;
-    }
     
     private async exportToSourceMap(descFile: DescFile, documentUri: vscode.Uri, _webviewPanel: vscode.WebviewPanel) {
         try {
@@ -629,7 +630,7 @@ break;
         }
     }
     
-    private generateSourceMap(descFile: DescFile): any {
+    private generateSourceMap(descFile: DescFile): SourceMapV3 {
         // Collect all unique names (semantic types)
         const namesSet = new Set<string>();
         descFile.mappings.forEach(mapping => {

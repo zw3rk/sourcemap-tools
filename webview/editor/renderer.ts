@@ -313,33 +313,55 @@ export class Renderer {
     private drawSegmentConnections(
         segment: MappingSegment, 
         mapping: Mapping,
-        _state: AppState,
+        state: AppState,
         svgContainer: SVGElement
     ): void {
-        // For each generated location, draw a connection to each source location
-        segment.generated.forEach(genLoc => {
-            segment.source.forEach(srcLoc => {
+        // Use the pairs array if available, otherwise fall back to cartesian product
+        if (segment.pairs && segment.pairs.length > 0) {
+            // Draw connections based on explicit pairs
+            segment.pairs.forEach(pair => {
                 const genEl = document.querySelector(
-                    `#generated-line-${genLoc.line} .char[data-col="${genLoc.column}"]`
+                    `#generated-line-${pair.generated.line} .char[data-col="${pair.generated.column}"]`
                 ) as HTMLElement;
-                const srcEl = document.querySelector(
-                    `#source-line-${srcLoc.line} .char[data-col="${srcLoc.column}"]`
-                ) as HTMLElement;
-
-                if (genEl && srcEl) {
-                    this.drawConnection(genEl, srcEl, mapping, svgContainer);
+                
+                if (genEl && pair.source) {
+                    const srcEl = document.querySelector(
+                        `#source-line-${pair.source.line} .char[data-col="${pair.source.column}"]`
+                    ) as HTMLElement;
+                    
+                    if (srcEl) {
+                        this.drawConnection(genEl, srcEl, mapping, state, svgContainer);
+                    }
                 }
+                // Note: For no-source mappings (pair.source === null), we don't draw bezier lines
             });
-        });
+        } else {
+            // Fallback: For each generated location, draw a connection to each source location
+            segment.generated.forEach(genLoc => {
+                segment.source.forEach(srcLoc => {
+                    const genEl = document.querySelector(
+                        `#generated-line-${genLoc.line} .char[data-col="${genLoc.column}"]`
+                    ) as HTMLElement;
+                    const srcEl = document.querySelector(
+                        `#source-line-${srcLoc.line} .char[data-col="${srcLoc.column}"]`
+                    ) as HTMLElement;
+
+                    if (genEl && srcEl) {
+                        this.drawConnection(genEl, srcEl, mapping, state, svgContainer);
+                    }
+                });
+            });
+        }
     }
 
     private drawConnection(
         generatedEl: HTMLElement,
         sourceEl: HTMLElement,
         mapping: Mapping,
+        state: AppState,
         svgContainer: SVGElement
     ): void {
-        const isSelected = mapping.id === mapping.id; // Will be fixed with state
+        const isSelected = mapping.id === state.selectedMappingId;
         const opacity = isSelected ? 0.9 : 0.1;
         const strokeWidth = isSelected ? '1.5' : '1';
 

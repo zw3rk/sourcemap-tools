@@ -43,17 +43,7 @@ export interface CharRange {
 // The single source of truth for the entire UI
 export interface AppState {
     // Document data
-    descFile: {
-        header: {
-            input: string;
-            version: string;
-            comments: string[];
-        };
-        output: {
-            filename: string;
-            content: string;
-        };
-    } | null;
+    descFile: DescFile | null;
     sourceContent: string;
     
     // Mapping data
@@ -74,9 +64,30 @@ export interface AppState {
     sourceSelection: CharRange[];
 }
 
+// DescFile interface (matching the backend)
+export interface DescFile {
+    header: {
+        input: string;
+        version?: string;
+        comments: string[];
+    };
+    output: {
+        filename: string;
+        content: string;
+    };
+    mappings: Array<{
+        type: 'mapping' | 'break';
+        genLine?: number;
+        genCol?: number;
+        srcLine?: number;
+        srcCol?: number;
+        semanticType?: string;
+    }>;
+}
+
 // Action types for state updates
 export type StateAction = 
-    | { type: 'SET_DESC_FILE'; payload: { descFile: any; sourceContent: string } }
+    | { type: 'SET_DESC_FILE'; payload: { descFile: DescFile | null; sourceContent: string } }
     | { type: 'SELECT_MAPPING'; payload: { mappingId: string | null } }
     | { type: 'TOGGLE_MAPPING_VISIBILITY'; payload: { mappingId: string } }
     | { type: 'DELETE_MAPPING'; payload: { mappingId: string } }
@@ -185,8 +196,8 @@ export function stateReducer(state: AppState, action: StateAction): AppState {
         case 'CREATE_MAPPING_FROM_STAGED':
             if (state.generatedSelection.length === 0) return state;
             
-            const generatedLocs = flattenRangesToLocations(state.generatedSelection, 'generated');
-            const sourceLocs = flattenRangesToLocations(state.sourceSelection, 'source', state.descFile?.header.input || '');
+            const generatedLocs = flattenRangesToLocations(state.generatedSelection, 'generated') as GeneratedLocation[];
+            const sourceLocs = flattenRangesToLocations(state.sourceSelection, 'source', state.descFile?.header.input || '') as SourceLocation[];
             
             // Create pairs
             const pairs: CharacterPair[] = [];
@@ -408,7 +419,7 @@ export function stateReducer(state: AppState, action: StateAction): AppState {
                         
                         // If no segments left, the mapping will be removed
                         if (updatedSegments.length === 0) {
-                            return null as any; // Will be filtered out
+                            return null!; // Will be filtered out
                         }
                         
                         return { ...m, segments: updatedSegments };
@@ -451,8 +462,8 @@ function flattenRangesToLocations(
     ranges: CharRange[], 
     type: 'generated' | 'source',
     sourceFile: string = ''
-): any[] {
-    const locations: any[] = [];
+): GeneratedLocation[] | SourceLocation[] {
+    const locations: (GeneratedLocation | SourceLocation)[] = [];
     
     for (const range of ranges) {
         for (let col = range.startCol; col <= range.endCol; col++) {
@@ -464,10 +475,23 @@ function flattenRangesToLocations(
         }
     }
     
-    return locations;
+    if (type === 'generated') {
+        return locations as GeneratedLocation[];
+    } else {
+        return locations as SourceLocation[];
+    }
 }
 
-function convertDescMappingsToStateMappings(descMappings: any[], existingMappings?: Mapping[], deletedPositions?: Set<string>): Mapping[] {
+type DescMapping = {
+    type: 'mapping' | 'break';
+    genLine?: number;
+    genCol?: number;
+    srcLine?: number;
+    srcCol?: number;
+    semanticType?: string;
+};
+
+function convertDescMappingsToStateMappings(descMappings: DescMapping[], existingMappings?: Mapping[], deletedPositions?: Set<string>): Mapping[] {
     // First, filter and convert desc mappings to individual pairs
     const pairData: Array<{
         genLine: number;

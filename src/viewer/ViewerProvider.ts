@@ -1,25 +1,15 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { MessageProtocol } from '../common/MessageProtocol';
-import { getNonce } from '../common/utils';
-import { SourcemapParser } from './SourcemapParser';
-import { PathResolver } from './PathResolver';
-import { FileLoader } from './FileLoader';
-import { FileWatcher } from '../common/FileWatcher';
+import { BaseWebviewProvider, WebviewConfig } from '../common/BaseWebviewProvider';
+import { VIEW_TYPES, DEFAULTS, WEBVIEW_COMMANDS } from '../common/constants';
 
-export class ViewerProvider {
+export class ViewerProvider extends BaseWebviewProvider {
     private static instance: ViewerProvider | undefined;
     private panel: vscode.WebviewPanel | undefined;
-    private parser: SourcemapParser;
-    private fileLoader: FileLoader;
-    private fileWatcher: FileWatcher | undefined;
     private currentSourcemapUri: vscode.Uri | undefined;
-    
-    private constructor(
-        private readonly context: vscode.ExtensionContext
-    ) {
-        this.parser = new SourcemapParser();
-        this.fileLoader = new FileLoader();
+
+    private constructor(context: vscode.ExtensionContext) {
+        super(context);
     }
 
     public static getInstance(context: vscode.ExtensionContext): ViewerProvider {
@@ -43,28 +33,29 @@ export class ViewerProvider {
 
         // Create new panel
         this.panel = vscode.window.createWebviewPanel(
-            'sourcemapVisualizer',
+            VIEW_TYPES.SOURCE_MAP_VISUALIZER,
             'Source Map Visualizer',
             column ?? vscode.ViewColumn.One,
             {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                localResourceRoots: [
-                    vscode.Uri.joinPath(this.context.extensionUri, 'out'),
-                    vscode.Uri.joinPath(this.context.extensionUri, 'resources'),
-                    vscode.Uri.file(path.dirname(sourcemapUri.fsPath))
-                ]
+                ...this.getWebviewOptions(sourcemapUri),
+                retainContextWhenHidden: true
             }
         );
 
         // Set HTML content
-        this.panel.webview.html = this.getHtmlContent(this.panel.webview);
+        const config: WebviewConfig = {
+            viewType: VIEW_TYPES.SOURCE_MAP_VISUALIZER,
+            scriptPath: 'viewer/index.js',
+            stylePath: 'viewer.css',
+            title: 'Source Map Visualizer'
+        };
+        this.panel.webview.html = this.getHtmlContent(this.panel.webview, config);
 
         // Handle messages from webview
         this.panel.webview.onDidReceiveMessage(
             async (message: unknown) => {
- await this.handleWebviewMessage(message as MessageProtocol); 
-},
+                await this.handleWebviewMessage(message as MessageProtocol);
+            },
             undefined,
             this.context.subscriptions
         );
@@ -73,8 +64,8 @@ export class ViewerProvider {
         this.panel.onDidDispose(
             () => {
                 this.panel = undefined;
-                this.fileWatcher?.dispose();
-                this.fileWatcher = undefined;
+                this.fileWatcherDisposable?.dispose();
+                this.fileWatcherDisposable = undefined;
             },
             undefined,
             this.context.subscriptions
@@ -90,122 +81,67 @@ export class ViewerProvider {
         }
 
         this.currentSourcemapUri = sourcemapUri;
-        
-        // Clear file loader cache for fresh reload
-        this.fileLoader.clearCache();
 
         try {
             // Read sourcemap file
             const sourcemapContent = await vscode.workspace.fs.readFile(sourcemapUri);
             const sourcemapText = new TextDecoder().decode(sourcemapContent);
 
-            // Parse the source map
-            const parsedMap = await this.parser.parse(sourcemapText);
-            
-            // Create path resolver
-            const resolver = new PathResolver(sourcemapUri);
-            
-            // Resolve file paths
-            const generatedPath = resolver.resolveGeneratedFile(parsedMap.file);
-            const sourcePaths = parsedMap.sources.map((source, index) => ({
-                original: source,
-                resolved: resolver.resolve(source, parsedMap.sourceRoot),
-                embeddedContent: parsedMap.sourcesContent?.[index]
-            }));
-            
-            // Load generated file if available
-            let generatedContent: string | undefined;
-            if (generatedPath) {
-                const genFile = await this.fileLoader.loadFile(generatedPath);
-                if (genFile.exists) {
-                    generatedContent = genFile.content;
-                }
-            }
-            
-            // Load first source file
-            let sourceContent: string | undefined;
-            if (sourcePaths.length > 0) {
-                const firstSource = sourcePaths[0];
-                if (firstSource) {
-                    const srcFile = await this.fileLoader.loadSourceContent(
-                        firstSource.resolved,
-                        firstSource.embeddedContent
-                    );
-                    if (srcFile.exists) {
-                        sourceContent = srcFile.content;
-                    }
-                }
-            }
+            // Load and parse source map using base class method
+            const data = await this.loadAndParseSourceMap(sourcemapUri, sourcemapText);
 
             // Send parsed data to webview
             void this.panel.webview.postMessage({
-                command: 'loadSourcemap',
+                command: WEBVIEW_COMMANDS.LOAD_SOURCEMAP,
                 sourcemapPath: sourcemapUri.fsPath,
-                payload: {
-                    parsedMap,
-                    generatedPath,
-                    generatedContent,
-                    sourcePaths,
-                    sourceContent,
-                    firstSourcePath: sourcePaths[0]?.resolved
-                }
+                payload: data
             } as MessageProtocol);
             
             // Set up file watching if auto-reload is enabled
             const config = vscode.workspace.getConfiguration('sourcemap-visualizer');
-            const autoReload = config.get<boolean>('autoReload', true);
+            const autoReload = config.get<boolean>('autoReload', DEFAULTS.AUTO_RELOAD);
             
             if (autoReload) {
                 this.setupFileWatching(
                     sourcemapUri.fsPath,
-                    generatedPath,
-                    sourcePaths.map(sp => sp.resolved)
+                    data.generatedPath,
+                    data.sourcePaths.map(sp => sp.resolved),
+                    () => {
+                        if (this.currentSourcemapUri) {
+                            void this.updateContent(this.currentSourcemapUri);
+                        }
+                    }
                 );
             }
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-            void vscode.window.showErrorMessage(`Failed to load sourcemap: ${errorMessage}`);
+            
+            this.errorHandler.handleError(error, {
+                operation: 'Loading source map',
+                details: { sourcemapUri: sourcemapUri.toString() }
+            });
             
             void this.panel.webview.postMessage({
-                command: 'error',
+                command: WEBVIEW_COMMANDS.ERROR,
                 error: errorMessage
             } as MessageProtocol);
         }
     }
-    
-    private setupFileWatching(
-        mapFilePath: string,
-        generatedFilePath: string | undefined,
-        sourceFilePaths: string[]
-    ): void {
-        // Dispose existing watcher
-        this.fileWatcher?.dispose();
-        
-        // Create new watcher
-        this.fileWatcher = new FileWatcher(() => {
-            if (this.currentSourcemapUri) {
-                void this.updateContent(this.currentSourcemapUri);
-            }
-        });
-        
-        this.fileWatcher.watchSourceMap(mapFilePath, generatedFilePath, sourceFilePaths);
-        
-        // Add to subscriptions for cleanup
-        this.context.subscriptions.push(this.fileWatcher);
-    }
 
     private async handleWebviewMessage(message: MessageProtocol): Promise<void> {
+        // Handle common messages first
+        if (this.handleCommonMessages(message)) {
+            return;
+        }
+
         switch (message.command) {
-            case 'ready':
+            case WEBVIEW_COMMANDS.READY:
                 // Webview is ready, can initialize
                 break;
-            case 'error':
-                void vscode.window.showErrorMessage(message.error || 'Unknown error in visualizer');
-                break;
-            case 'loadFile':
+            case WEBVIEW_COMMANDS.LOAD_FILE:
                 await this.loadFileContent(message.filePath!);
                 break;
-            case 'export':
+            case WEBVIEW_COMMANDS.EXPORT:
                 await this.handleExport(message);
                 break;
             default:
@@ -224,13 +160,18 @@ export class ViewerProvider {
             const text = new TextDecoder().decode(content);
 
             void this.panel.webview.postMessage({
-                command: 'fileContent',
+                command: WEBVIEW_COMMANDS.FILE_CONTENT,
                 filePath,
                 content: text
             } as MessageProtocol);
         } catch (error) {
+            this.errorHandler.logError(error, {
+                operation: 'Loading file content',
+                details: { filePath }
+            });
+            
             void this.panel.webview.postMessage({
-                command: 'error',
+                command: WEBVIEW_COMMANDS.ERROR,
                 error: `Failed to load file: ${filePath}`
             } as MessageProtocol);
         }
@@ -254,37 +195,16 @@ export class ViewerProvider {
                     void vscode.window.showInformationMessage(`Exported visualization to ${saveUri.toString()}`);
                 }
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-                void vscode.window.showErrorMessage(`Failed to export: ${errorMessage}`);
+                this.errorHandler.handleError(error, {
+                    operation: 'Exporting visualization',
+                    details: { format: payload.format }
+                });
             }
         }
     }
 
-    private getHtmlContent(webview: vscode.Webview): string {
-        const nonce = getNonce();
-        
-        const scriptUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'out', 'webview', 'viewer', 'index.js')
-        );
-        
-        const styleUri = webview.asWebviewUri(
-            vscode.Uri.joinPath(this.context.extensionUri, 'resources', 'styles', 'viewer.css')
-        );
-
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'none'; 
-                   style-src ${webview.cspSource} 'unsafe-inline'; 
-                   script-src 'nonce-${nonce}';">
-    <link href="${styleUri}" rel="stylesheet">
-    <title>Source Map Visualizer</title>
-</head>
-<body>
-    <div id="container">
+    protected getBodyContent(): string {
+        return `<div id="container">
         <div id="viewer">
             <div id="source-pane" class="code-pane">
                 <div class="pane-header">Source</div>
@@ -307,9 +227,6 @@ export class ViewerProvider {
             <span id="status-text">Ready</span>
             <span id="mapping-stats" class="mapping-stats"></span>
         </div>
-    </div>
-    <script nonce="${nonce}" src="${scriptUri}"></script>
-</body>
-</html>`;
+    </div>`;
     }
 }

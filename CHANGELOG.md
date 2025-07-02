@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.0.5] - 2025-01-02
+
+### Fixed
+- Fixed critical regression where bezier lines were not displaying for mappings (only first line of generated file was shown)
+- Fixed desc editor to load content from actual INPUT/OUTPUT files instead of using embedded content
+- Fixed linting error with unnecessary await in MapEditorProvider
+
+### Changed
+- Improved code quality and organization:
+  - Extracted common webview provider logic into BaseWebviewProvider class
+  - Consolidated FileLoader and PathResolver into unified FileService
+  - Created TypedMessages for type-safe webview communication
+  - Improved TypeScript type safety throughout the codebase
+  - Created centralized ErrorHandler for consistent error handling
+  - Implemented efficient WorkspaceFileWatcher using singleton pattern
+  - Extracted magic strings into constants file for better maintainability
+
+### Internal
+- Eliminated ~200 lines of duplicate code through base class extraction
+- Improved performance with optimized file watching
+- Enhanced error handling consistency across the extension
+
 ## [1.0.4] - 2025-01-01
 
 ### Fixed

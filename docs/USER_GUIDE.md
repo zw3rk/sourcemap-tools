@@ -93,14 +93,12 @@ OUTPUT: generated-file.ext
 Example:
 ```
 INPUT: example.uwu
-VERSION
-1.0.0
 
 OUTPUT: example.uplc
-(program 1.0.0 data)
+; 1-based absolute indices
 
 [2,1,1,1,PGM]
-[10,5,1,5,DATA]
+[10,1,1,5,DATA]
 [-]
 ```
 
