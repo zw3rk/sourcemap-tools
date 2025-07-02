@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.6] - 2025-01-02
+
+### Fixed
+- Fixed TypeScript linting errors in BaseWebviewProvider
+- Improved type safety by removing `any` types
+- Fixed Uri template literal expressions
+- Fixed nullable string conditionals
+
 ## [1.0.5] - 2025-01-02
 
 ### Fixed

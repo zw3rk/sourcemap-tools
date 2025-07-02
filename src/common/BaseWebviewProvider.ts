@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { MessageProtocol } from './MessageProtocol';
+import { MessageProtocol, ParsedSourceMap } from './MessageProtocol';
 import { getNonce } from './utils';
 import { SourcemapParser } from './SourcemapParser';
 import { FileService } from './FileService';
@@ -16,7 +16,7 @@ export interface WebviewConfig {
 }
 
 export interface ParsedSourceMapData {
-    parsedMap: any;
+    parsedMap: ParsedSourceMap;
     generatedPath: string | undefined;
     generatedContent: string | undefined;
     sourcePaths: Array<{
@@ -67,7 +67,7 @@ export abstract class BaseWebviewProvider {
         
         // Load generated file if available
         let generatedContent: string | undefined;
-        if (generatedPath) {
+        if (generatedPath !== undefined && generatedPath !== '') {
             const genFile = await this.fileService.loadFile(generatedPath);
             if (genFile.exists) {
                 generatedContent = genFile.content;
@@ -146,13 +146,13 @@ export abstract class BaseWebviewProvider {
                    script-src 'nonce-${nonce}';
                    font-src ${webview.cspSource};
                    img-src ${webview.cspSource} data:;">
-    <link href="${codiconsUri}" rel="stylesheet">
-    <link href="${styleUri}" rel="stylesheet">
+    <link href="${codiconsUri.toString()}" rel="stylesheet">
+    <link href="${styleUri.toString()}" rel="stylesheet">
     <title>${config.title}</title>
 </head>
 <body>
     ${this.getBodyContent()}
-    <script nonce="${nonce}" src="${scriptUri}"></script>
+    <script nonce="${nonce}" src="${scriptUri.toString()}"></script>
 </body>
 </html>`;
     }
@@ -163,18 +163,19 @@ export abstract class BaseWebviewProvider {
         switch (message.command) {
             case 'error':
                 this.logger.log('Error from webview', message.error);
-                if (message.error) {
+                if (message.error !== undefined && message.error !== null && message.error !== '') {
                     void vscode.window.showErrorMessage(message.error);
                 }
                 return true;
-            case 'log':
-                const logData = (message as any).data;
-                const logMessage = (message as any).message;
-                if (logData) {
-                    this.logger.log(logMessage || '', logData);
+            case 'log': {
+                const logMessage = 'message' in message ? String(message.message) : '';
+                const logData = 'data' in message ? message.data : undefined;
+                if (logData !== undefined) {
+                    this.logger.log(logMessage, logData);
                 } else {
-                    this.logger.log(logMessage || '');
+                    this.logger.log(logMessage);
                 }
+            }
                 return true;
             default:
                 return false;
