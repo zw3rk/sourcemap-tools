@@ -48,6 +48,12 @@ export class FileService {
             return sourcePath;
         }
         
+        // First, try suffix matching for self-referential paths
+        const suffixMatch = this.findCommonPathSuffix(mapDirectory, sourcePath);
+        if (suffixMatch.commonSegments > 0 && suffixMatch.resolvedPath) {
+            return suffixMatch.resolvedPath;
+        }
+        
         // Try multiple resolution strategies
         const candidates = this.generateCandidatePaths(
             sourcePath,
@@ -73,6 +79,14 @@ export class FileService {
         }
         
         const mapDirectory = path.dirname(mapFileUri.fsPath);
+        
+        // First, try suffix matching for self-referential paths
+        const suffixMatch = this.findCommonPathSuffix(mapDirectory, file);
+        if (suffixMatch.commonSegments > 0 && suffixMatch.resolvedPath) {
+            return suffixMatch.resolvedPath;
+        }
+        
+        // Fall back to standard relative resolution
         return path.resolve(mapDirectory, file);
     }
     
@@ -205,6 +219,58 @@ export class FileService {
     }
     
     // Private Helper Methods
+    
+    /**
+     * Find common path suffix between map directory and target path
+     * This helps resolve paths when source map references share structure with map location
+     * 
+     * @example
+     * mapDir: "/project/dist/examples/uwu"
+     * targetPath: "examples/uwu/arithmetic.js"
+     * returns: { commonSegments: 2, resolvedPath: "/project/dist/examples/uwu/arithmetic.js" }
+     */
+    private findCommonPathSuffix(
+        mapDir: string,
+        targetPath: string
+    ): { commonSegments: number; resolvedPath: string } {
+        // Normalize and split paths
+        const mapSegments = mapDir.split(path.sep).filter(s => s !== '');
+        // Handle both forward and backward slashes in target path
+        const targetSegments = targetPath.split(/[/\\]/).filter(s => s !== '');
+        
+        // Remove filename from target path to get directory segments only
+        const targetDirSegments = targetSegments.slice(0, -1);
+        const targetFilename = targetSegments[targetSegments.length - 1];
+        
+        if (targetDirSegments.length === 0) {
+            return { commonSegments: 0, resolvedPath: '' };
+        }
+        
+        let matchCount = 0;
+        const minLen = Math.min(mapSegments.length, targetDirSegments.length);
+        
+        // Match from the end (suffix matching)
+        for (let i = 1; i <= minLen; i++) {
+            const mapSegment = mapSegments[mapSegments.length - i];
+            const targetSegment = targetDirSegments[targetDirSegments.length - i];
+            
+            if (mapSegment === targetSegment) {
+                matchCount++;
+            } else {
+                break;
+            }
+        }
+        
+        // If we found matching suffix, resolve the path
+        if (matchCount > 0 && matchCount === targetDirSegments.length) {
+            // All directory segments of target match the suffix of mapDir
+            // The resolved path is mapDir + filename
+            const resolvedPath = path.join(mapDir, targetFilename || '');
+            return { commonSegments: matchCount, resolvedPath };
+        }
+        
+        return { commonSegments: 0, resolvedPath: '' };
+    }
     
     private generateCandidatePaths(
         sourcePath: string,
