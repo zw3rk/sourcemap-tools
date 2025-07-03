@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.2.1] - 2025-01-03
+
+### Fixed
+- Fixed .desc file serialization for mappings without source information
+  - Mappings with undefined source positions now correctly output as `[17]` instead of `[17,1,undefined,undefined,UNKNOWN]`
+  - Updated serialization logic to properly detect no-source mappings
+- Fixed .desc file content handling to treat embedded content as informational cache
+  - Output content is now refreshed from disk files on save
+  - When OUTPUT field changes, fresh content is loaded from the referenced file
+  - When loading a .desc file, current content is loaded from the referenced files
+  - Ensures .desc files always reflect the current state of the actual source/output files
+
+### Added
+- Automated release process with `make release VERSION=x.x.x` command
+- Comprehensive release automation script that handles verification, squashing, tagging
+- Claude project commands for common development workflows
+
+### Changed
+- Improved release workflow documentation in CLAUDE.md
+- Enhanced release verification scripts to prevent development files from reaching master
+
 ## [1.2.0] - 2025-01-03
 
 ### Added

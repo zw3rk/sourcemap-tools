@@ -172,7 +172,8 @@ export class DescParser {
                 lines.push('[-]');
             } else {
                 let line: string;
-                if (mapping.srcLine === 0 && mapping.srcCol === 0 && mapping.srcIdx === 0) {
+                if (!mapping.srcLine || !mapping.srcCol || !mapping.srcIdx ||
+                    (mapping.srcLine === 0 && mapping.srcCol === 0 && mapping.srcIdx === 0)) {
                     // No-source mapping: just [genCol]
                     line = `[${mapping.genCol}]`;
                 } else {

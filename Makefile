@@ -79,3 +79,13 @@ ci: ## Run full CI pipeline (init, lint, test, build, package)
 	$(MAKE) build
 	$(MAKE) package
 	@echo "CI pipeline completed successfully!"
+
+.PHONY: release
+release: ## Create a new release (usage: make release VERSION=1.3.0)
+	@if [ -z "$(VERSION)" ]; then \
+		echo "Error: VERSION is required"; \
+		echo "Usage: make release VERSION=1.3.0"; \
+		exit 1; \
+	fi
+	@echo "Creating release v$(VERSION)..."
+	@bash scripts/make-release.sh $(VERSION)

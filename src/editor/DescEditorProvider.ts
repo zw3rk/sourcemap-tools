@@ -95,7 +95,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.output.filename);
                     try {
                         outputContent = await fs.promises.readFile(outputPath, 'utf-8');
-                        // Override the desc file's embedded content with the actual file content
+                        // Update the desc file's content with the actual file content
                         descFile.output.content = outputContent;
                     } catch (err) {
                         console.warn(`Could not load output file: ${outputPath}`);
@@ -217,7 +217,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             logger.log(`Adding ${lineBreaksToAdd.length} line breaks before mapping`);
                             
                             // Prepare the mapping text
-                            const mappingText = newMapping.srcLine === 0 
+                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0) 
                                 ? `[${newMapping.genCol}]`
                                 : `[${newMapping.genCol},${srcIdx},${newMapping.srcLine},${newMapping.srcCol},${newMapping.semanticType}]`;
                             
@@ -230,7 +230,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             }
                         } else {
                             // No mappings section found - this shouldn't happen with our template
-                            const mappingText = newMapping.srcLine === 0 
+                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0) 
                                 ? `[${newMapping.genCol}]`
                                 : `[${newMapping.genCol},${srcIdx},${newMapping.srcLine},${newMapping.srcCol},${newMapping.semanticType}]`;
                             edit.insert(document.uri, new vscode.Position(insertLine, 0), mappingText + '\n');
@@ -312,17 +312,59 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             allMappings: mappings
                         });
                         
-                        // Find where mappings section starts
-                        let mappingsSectionStart = -1;
+                        // First, update the output content from disk before saving
+                        const edit = new vscode.WorkspaceEdit();
+                        
+                        // Find OUTPUT: line and content section
+                        let outputLineIndex = -1;
+                        let contentStartIndex = -1;
+                        let mappingCommentIndex = -1;
+                        
                         for (let i = 0; i < document.lineCount; i++) {
-                            if (document.lineAt(i).text.includes('1-based absolute indices')) {
-                                mappingsSectionStart = i + 1;
+                            const line = document.lineAt(i);
+                            if (line.text.startsWith('OUTPUT:')) {
+                                outputLineIndex = i;
+                            } else if (outputLineIndex >= 0 && line.text.includes('1-based absolute indices')) {
+                                mappingCommentIndex = i;
+                                // Content is between OUTPUT line and mapping comment
+                                if (outputLineIndex + 1 < mappingCommentIndex) {
+                                    contentStartIndex = outputLineIndex + 1;
+                                }
                                 break;
                             }
                         }
                         
-                        if (mappingsSectionStart >= 0) {
-                            const edit = new vscode.WorkspaceEdit();
+                        // Update output content from disk if OUTPUT file exists
+                        if (outputLineIndex >= 0 && descFile.output.filename) {
+                            try {
+                                const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.output.filename);
+                                const outputContent = await fs.promises.readFile(outputPath, 'utf-8');
+                                
+                                // Delete old content lines
+                                if (contentStartIndex >= 0 && mappingCommentIndex > contentStartIndex) {
+                                    for (let i = mappingCommentIndex - 1; i >= contentStartIndex; i--) {
+                                        edit.delete(document.uri, new vscode.Range(i, 0, i + 1, 0));
+                                    }
+                                }
+                                
+                                // Insert fresh content from disk
+                                edit.insert(document.uri, new vscode.Position(outputLineIndex + 1, 0), outputContent + '\n');
+                            } catch (err) {
+                                logger.log(`Could not refresh output content from disk: ${err}`);
+                            }
+                        }
+                        
+                        // Now handle mappings - recalculate mappingsSectionStart after content update
+                        mappingCommentIndex = -1;
+                        for (let i = 0; i < document.lineCount; i++) {
+                            if (document.lineAt(i).text.includes('1-based absolute indices')) {
+                                mappingCommentIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (mappingCommentIndex >= 0) {
+                            const mappingsSectionStart = mappingCommentIndex + 1;
                             
                             // Delete all existing mappings
                             let endLine = mappingsSectionStart;
@@ -376,7 +418,7 @@ return a.genLine - b.genLine;
                                     // Add all mappings for this line
                                     for (const mapping of lineMappings) {
                                         const srcIdx = 1; // TODO: Support multiple source files
-                                        const mappingText = mapping.srcLine === 0 
+                                        const mappingText = (!mapping.srcLine || mapping.srcLine === 0) 
                                             ? `[${mapping.genCol}]`
                                             : `[${mapping.genCol},${srcIdx},${mapping.srcLine},${mapping.srcCol},${mapping.semanticType ?? 'UNKNOWN'}]`;
                                         mappingLines.push(mappingText);
