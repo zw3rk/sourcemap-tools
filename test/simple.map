@@ -1,0 +1,9 @@
+{
+  "version": 3,
+  "file": "output.js",
+  "sourceRoot": "",
+  "sources": ["input.js"],
+  "sourcesContent": ["// Original source\nfunction hello() {\n  console.log('Hello World');\n}"],
+  "names": ["hello", "console", "log"],
+  "mappings": "AAAA;AACA,SAASA,KAAK,GAAG;AACjB,EAAEC,OAAO,CAACC,GAAG,CAAC,aAAa,CAAC,CAAC;AAC7B,CAAC"
+}

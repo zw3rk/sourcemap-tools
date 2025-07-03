@@ -1,5 +1,26 @@
 # Changelog
 
+## [1.1.0] - 2025-01-03
+
+### Added
+- New VSCode command to convert .map files to .desc format
+  - Accessible via Command Palette: "Source Map: Convert to Description File (.desc)"
+  - Available in context menu when right-clicking .map files
+  - Supports multiple source files with separate INPUT: lines
+  - Preserves semantic types and relative paths
+
+### Changed
+- **BREAKING**: DescHeader interface now uses `inputs: string[]` instead of `input: string`
+  - All code using `header.input` must be updated to use `header.inputs`
+  - DescParser now collects all INPUT: lines into the array
+
+### Fixed
+- Round-trip conversion (.map → .desc → .map) now preserves data accurately
+  - Line breaks are properly handled with [-] markers
+  - No artificial semantic types (GENERATED/UNKNOWN) are added
+  - Relative paths are preserved without conversion to absolute
+  - Multiple source files are properly supported
+
 ## [1.0.9] - 2025-01-02
 
 ### Fixed

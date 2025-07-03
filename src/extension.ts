@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { visualizeSourcemapCommand } from './commands/visualizeSourcemap';
 import { editDescriptionCommand } from './commands/editDescription';
 import { openInTextEditorCommand, openInCustomEditorCommand } from './commands/toggleEditor';
+import { convertToDescCommand } from './commands/convertToDesc';
 import { DescEditorProvider } from './editor/DescEditorProvider';
 import { MapEditorProvider } from './editor/MapEditorProvider';
 import { Logger } from './common/logger';
@@ -48,12 +49,19 @@ export function activate(context: vscode.ExtensionContext): void {
             logger.show();
         }
     );
+    
+    // Register convert to desc command
+    const convertToDescCmd = vscode.commands.registerCommand(
+        'sourcemap-visualizer.convertToDesc',
+        convertToDescCommand
+    );
 
     context.subscriptions.push(
         visualizeCommand, 
         editCommand, 
         openInTextEditorCmd,
         openInCustomEditorCmd,
+        convertToDescCmd,
         mapEditorProvider,
         descEditorProvider, 
         showLogsCommand

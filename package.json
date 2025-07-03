@@ -2,7 +2,7 @@
   "name": "source-map-visualizer",
   "displayName": "Source Map Visualizer",
   "description": "Advanced source map visualization and visual mapping editor for VSCode",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "engines": {
     "vscode": "^1.74.0"
   },
@@ -78,6 +78,12 @@
         "title": "Open in Visualizer/Editor",
         "category": "Source Map",
         "icon": "$(graph)"
+      },
+      {
+        "command": "sourcemap-visualizer.convertToDesc",
+        "title": "Convert to Description File (.desc)",
+        "category": "Source Map",
+        "icon": "$(export)"
       }
     ],
     "menus": {
@@ -97,6 +103,17 @@
           "command": "sourcemap-visualizer.openInCustomEditor",
           "when": "resourceExtname == .desc && activeCustomEditorId != 'src-map-viz.descEditor'",
           "group": "navigation"
+        },
+        {
+          "command": "sourcemap-visualizer.convertToDesc",
+          "when": "resourceExtname == .map",
+          "group": "2_convert"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "sourcemap-visualizer.convertToDesc",
+          "when": "resourceExtname == .map"
         }
       ]
     },

@@ -1,5 +1,5 @@
 export interface DescHeader {
-    input: string;
+    inputs: string[];  // Changed from single string to array of strings
     comments: string[];
 }
 
@@ -32,7 +32,7 @@ export class DescParser {
         
         // Parse header
         const header: DescHeader = {
-            input: '',
+            inputs: [],
             comments: []
         };
         
@@ -40,20 +40,16 @@ export class DescParser {
             const line = lines[i]?.trim() || '';
             
             if (line.startsWith('INPUT:')) {
-                header.input = line.substring(6).trim();
-                // Skip all content until OUTPUT: or mapping lines starting with [
-                i++;
-                while (i < lines.length) {
-                    const nextLine = lines[i]?.trim() || '';
-                    if (nextLine.startsWith('OUTPUT:') || nextLine.startsWith('[')) {
-                        i--; // Back up one line so the main loop can process it
-                        break;
-                    }
-                    i++;
-                }
+                header.inputs.push(line.substring(6).trim());
             } else if (line.startsWith('--')) {
                 header.comments.push(line.substring(2).trim());
             } else if (line.startsWith('OUTPUT:')) {
+                break;
+            } else if (line === '' || line.startsWith('#')) {
+                // Skip empty lines and comment lines starting with #
+            } else if (line.startsWith('[')) {
+                // If we hit a mapping line, we need to back up
+                i--;
                 break;
             }
             
@@ -116,10 +112,6 @@ export class DescParser {
                             type: 'mapping',
                             genLine: currentGenLine,
                             genCol: parseInt(parts[0] || '0'),
-                            srcIdx: 0,
-                            srcLine: 0,
-                            srcCol: 0,
-                            semanticType: 'GENERATED',
                             comment
                         });
                     } else if (parts.length >= 5) {
@@ -143,7 +135,6 @@ export class DescParser {
                             srcIdx: parseInt(parts[1] || '0'),
                             srcLine: parseInt(parts[2] || '0'),
                             srcCol: parseInt(parts[3] || '0'),
-                            semanticType: 'UNKNOWN',
                             comment
                         });
                     }
@@ -160,7 +151,9 @@ export class DescParser {
         const lines: string[] = [];
         
         // Header
-        lines.push(`INPUT: ${desc.header.input}`);
+        desc.header.inputs.forEach(input => {
+            lines.push(`INPUT: ${input}`);
+        });
         lines.push('');
         desc.header.comments.forEach(comment => {
             lines.push(`-- ${comment}`);

@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import { MessageProtocol } from '../common/MessageProtocol';
 import { BaseWebviewProvider, WebviewConfig } from '../common/BaseWebviewProvider';
 import { debounce } from '../common/utils';
 import { VIEW_TYPES, DEFAULTS, COMMANDS } from '../common/constants';
+import { MapToDescConverter } from '../converter/MapToDescConverter';
+import { DescSerializer } from '../converter/DescSerializer';
+import { SourceMapV3 } from '../common/DescEditorMessages';
 
 export class MapEditorProvider extends BaseWebviewProvider implements vscode.CustomTextEditorProvider {
     public static register(context: vscode.ExtensionContext): vscode.Disposable {
@@ -146,8 +151,54 @@ export class MapEditorProvider extends BaseWebviewProvider implements vscode.Cus
                 // Open the current .map file in text editor
                 await vscode.commands.executeCommand(COMMANDS.OPEN_IN_TEXT_EDITOR, document.uri);
                 break;
+            case 'convertToDesc':
+                // Convert .map to .desc format
+                await this.convertToDesc(document);
+                break;
             default:
                 console.warn('Unknown message command:', message.command);
+        }
+    }
+
+    private async convertToDesc(document: vscode.TextDocument): Promise<void> {
+        try {
+            // Parse the source map
+            const sourcemapContent = document.getText();
+            const sourceMap: SourceMapV3 = JSON.parse(sourcemapContent);
+            
+            // Convert to .desc format
+            const descFile = MapToDescConverter.convert(sourceMap, document.uri.fsPath);
+            const descContent = DescSerializer.serialize(descFile);
+            
+            // Ask user where to save
+            const defaultPath = document.uri.fsPath.replace(/\.map$/, '.desc');
+            const saveUri = await vscode.window.showSaveDialog({
+                defaultUri: vscode.Uri.file(defaultPath),
+                filters: {
+                    'Description Files': ['desc'],
+                    'All Files': ['*']
+                }
+            });
+            
+            if (saveUri) {
+                await fs.promises.writeFile(saveUri.fsPath, descContent);
+                vscode.window.showInformationMessage(`Description file created at ${path.basename(saveUri.fsPath)}`);
+                
+                // Optionally open the created file
+                const openFile = await vscode.window.showInformationMessage(
+                    'Would you like to open the created description file?',
+                    'Yes',
+                    'No'
+                );
+                
+                if (openFile === 'Yes') {
+                    await vscode.commands.executeCommand('vscode.open', saveUri);
+                }
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            vscode.window.showErrorMessage(`Failed to convert to description file: ${errorMessage}`);
+            this.logger.log('Error converting to desc file', error);
         }
     }
 

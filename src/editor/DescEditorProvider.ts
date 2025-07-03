@@ -58,7 +58,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     // Create a default structure for empty files
                     descFile = {
                         header: {
-                            input: '',
+                            inputs: [],
                             comments: []
                         },
                         output: {
@@ -78,10 +78,10 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                 
                 descFile = DescParser.parse(document.getText());
                 
-                // Load source file content if it exists
+                // Load source file content if it exists (using first input for now)
                 let sourceContent = '';
-                if (descFile.header.input) {
-                    const sourcePath = path.resolve(path.dirname(document.uri.fsPath), descFile.header.input);
+                if (descFile.header.inputs && descFile.header.inputs.length > 0 && descFile.header.inputs[0]) {
+                    const sourcePath = path.resolve(path.dirname(document.uri.fsPath), descFile.header.inputs[0]);
                     try {
                         sourceContent = await fs.promises.readFile(sourcePath, 'utf-8');
                     } catch (err) {
@@ -714,7 +714,7 @@ break;
             version: 3,
             file: descFile.output.filename || '',
             sourceRoot: '',
-            sources: [descFile.header.input],
+            sources: descFile.header.inputs,
             names: names,
             mappings: generatedLines.join(';')
         };

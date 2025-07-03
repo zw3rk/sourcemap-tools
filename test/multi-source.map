@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "bundle.js",
+  "sourceRoot": "",
+  "sources": ["src/utils.js", "src/main.js", "src/config.js"],
+  "sourcesContent": [
+    "// utils.js\nexport function add(a, b) {\n  return a + b;\n}\n\nexport function multiply(a, b) {\n  return a * b;\n}",
+    "// main.js\nimport { add, multiply } from './utils';\nimport { config } from './config';\n\nconsole.log(add(1, 2));\nconsole.log(multiply(3, 4));\nconsole.log(config.version);",
+    "// config.js\nexport const config = {\n  version: '1.0.0',\n  debug: true\n};"
+  ],
+  "names": ["add", "multiply", "console", "log", "config", "version"],
+  "mappings": "AAAA;AACA,SAASA,GAAG,CAAC,CAAC,EAAE,CAAC,EAAE;AACnB,EAAE,OAAO,CAAC,GAAG,CAAC,CAAC;AACf,CAAC;AACD;AACA,SAASC,QAAQ,CAAC,CAAC,EAAE,CAAC,EAAE;AACxB,EAAE,OAAO,CAAC,GAAG,CAAC,CAAC;AACf,CAAC;ACND;ACAA;AACA,MAAM,MAAM,GAAG;AACf,EAAE,OAAO,EAAE,OAAO;AAClB,EAAE,KAAK,EAAE,IAAI;AACb,CAAC,CAAC;ADFF;AAGAC,OAAO,CAACC,GAAG,CAACH,GAAG,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC;AACvBE,OAAO,CAACC,GAAG,CAACF,QAAQ,CAAC,CAAC,EAAE,CAAC,CAAC,CAAC,CAAC;AAC5BC,OAAO,CAACC,GAAG,CAACC,MAAM,CAACC,OAAO,CAAC,CAAC"
+}
