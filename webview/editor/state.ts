@@ -67,7 +67,7 @@ export interface AppState {
 // DescFile interface (matching the backend)
 export interface DescFile {
     header: {
-        input: string;
+        inputs: string[];  // Changed from single input to array of inputs
         version?: string;
         comments: string[];
     };
@@ -197,7 +197,7 @@ export function stateReducer(state: AppState, action: StateAction): AppState {
             if (state.generatedSelection.length === 0) return state;
             
             const generatedLocs = flattenRangesToLocations(state.generatedSelection, 'generated') as GeneratedLocation[];
-            const sourceLocs = flattenRangesToLocations(state.sourceSelection, 'source', state.descFile?.header.input || '') as SourceLocation[];
+            const sourceLocs = flattenRangesToLocations(state.sourceSelection, 'source', state.descFile?.header.inputs[0] || '') as SourceLocation[];
             
             // Create pairs
             const pairs: CharacterPair[] = [];
@@ -406,7 +406,7 @@ export function stateReducer(state: AppState, action: StateAction): AppState {
                                 const source = Array.from(srcSet).map(loc => {
                                     const [line, col] = loc.split(':').map(Number);
                                     return { 
-                                        sourceFile: state.descFile?.header.input || '',
+                                        sourceFile: state.descFile?.header.inputs[0] || '',
                                         line, 
                                         column: col 
                                     };

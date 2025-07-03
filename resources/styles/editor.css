@@ -91,6 +91,28 @@ body {
     border-bottom: 1px solid var(--vscode-panel-border);
 }
 
+/* Save Status */
+.save-status {
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+    transition: all 0.3s ease;
+}
+
+.save-status .save-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.save-status.saved .save-indicator {
+    opacity: 1;
+    color: var(--vscode-notificationsInfoIcon-foreground);
+}
+
 .toolbar-button {
     display: flex;
     align-items: center;

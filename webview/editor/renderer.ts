@@ -32,7 +32,8 @@ export class Renderer {
         const outputField = document.getElementById('output-field') as HTMLInputElement;
         
         if (inputField && state.descFile) {
-            inputField.value = state.descFile.header.input || '';
+            // Display all inputs as comma-separated values
+            inputField.value = state.descFile.header.inputs.join(', ') || '';
         }
         if (outputField && state.descFile) {
             outputField.value = state.descFile.output.filename || '';
@@ -42,7 +43,8 @@ export class Renderer {
         const sourceFilename = document.getElementById('source-filename');
         const generatedFilename = document.getElementById('generated-filename');
         if (sourceFilename && state.descFile) {
-            sourceFilename.textContent = state.descFile.header.input || 'No file selected';
+            // Show first input file or "No file selected" if no inputs
+            sourceFilename.textContent = state.descFile.header.inputs[0] || 'No file selected';
         }
         if (generatedFilename && state.descFile) {
             generatedFilename.textContent = state.descFile.output.filename || 'No file selected';
@@ -182,7 +184,7 @@ export class Renderer {
             
             // Get file names
             const genFile = state.descFile?.output.filename || 'generated';
-            const srcFile = state.descFile?.header.input || 'source';
+            const srcFile = state.descFile?.header.inputs[0] || 'source';
             
             // Collect all pairs from all segments with their original indices
             const allPairs: Array<{pair: CharacterPair, segmentId: string, originalIndex: number}> = [];

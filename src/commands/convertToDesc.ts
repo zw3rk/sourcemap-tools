@@ -10,12 +10,19 @@ export async function convertToDescCommand(uri?: vscode.Uri): Promise<void> {
     const logger = Logger.getInstance();
     
     try {
-        // Get the URI - either from parameter or active editor
+        // Get the URI - either from parameter, active text editor, or active custom editor
         let fileUri = uri;
         if (!fileUri) {
+            // First try active text editor
             const activeEditor = vscode.window.activeTextEditor;
             if (activeEditor) {
                 fileUri = activeEditor.document.uri;
+            } else {
+                // Try to find active custom editor
+                const activeTab = vscode.window.tabGroups.activeTabGroup.activeTab;
+                if (activeTab && activeTab.input && typeof activeTab.input === 'object' && 'uri' in activeTab.input) {
+                    fileUri = (activeTab.input as any).uri;
+                }
             }
         }
         

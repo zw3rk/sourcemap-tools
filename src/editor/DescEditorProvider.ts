@@ -421,18 +421,39 @@ break;
                 case 'updateInput':
                     if (descFile) {
                         const inputEdit = new vscode.WorkspaceEdit();
-                        // Find INPUT: line
+                        const inputs: string[] = Array.isArray(message.value) ? message.value as string[] : [message.value as string];
+                        
+                        // Find all existing INPUT: lines
+                        let firstInputLine = -1;
+                        let lastInputLine = -1;
                         for (let i = 0; i < document.lineCount; i++) {
                             const line = document.lineAt(i);
                             if (line.text.startsWith('INPUT:')) {
-                                inputEdit.replace(
-                                    document.uri,
-                                    new vscode.Range(i, 0, i, line.text.length),
-                                    `INPUT: ${message.value}`
-                                );
+                                if (firstInputLine === -1) {
+                                    firstInputLine = i;
+                                }
+                                lastInputLine = i;
+                            } else if (firstInputLine !== -1 && !line.text.startsWith('INPUT:')) {
+                                // We've passed all INPUT lines
                                 break;
                             }
                         }
+                        
+                        if (firstInputLine !== -1) {
+                            // Delete all existing INPUT lines
+                            if (lastInputLine >= firstInputLine) {
+                                inputEdit.delete(document.uri, new vscode.Range(firstInputLine, 0, lastInputLine + 1, 0));
+                            }
+                            
+                            // Insert new INPUT lines
+                            const inputLines = inputs.map((input: string) => `INPUT: ${input}`).join('\n') + '\n';
+                            inputEdit.insert(document.uri, new vscode.Position(firstInputLine, 0), inputLines);
+                        } else {
+                            // No INPUT lines found, add at the beginning
+                            const inputLines = inputs.map((input: string) => `INPUT: ${input}`).join('\n') + '\n';
+                            inputEdit.insert(document.uri, new vscode.Position(0, 0), inputLines);
+                        }
+                        
                         await vscode.workspace.applyEdit(inputEdit);
                     }
                     break;
@@ -555,12 +576,21 @@ break;
             }
         });
 
+        // Listen for save events
+        const saveDocumentSubscription = vscode.workspace.onDidSaveTextDocument(e => {
+            if (e.uri.toString() === document.uri.toString()) {
+                // Send save notification to webview
+                void webviewPanel.webview.postMessage({ type: 'saved' });
+            }
+        });
+
         // Clean up
         webviewPanel.onDidDispose(() => {
             if (updateTimer) {
                 clearTimeout(updateTimer);
             }
             changeDocumentSubscription.dispose();
+            saveDocumentSubscription.dispose();
         });
 
         // Initial update

@@ -1,6 +1,8 @@
 import { SourceMapV3 } from '../common/DescEditorMessages';
 import { DescFile, DescHeader, DescOutput, DescMapping } from '../editor/DescParser';
 import { decodeVLQ } from '../common/vlq';
+import { FileService } from '../common/FileService';
+import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class MapToDescConverter {
@@ -14,18 +16,26 @@ export class MapToDescConverter {
         // Decode the VLQ mappings
         const decodedMappings = this.decodeMappings(sourceMap.mappings);
         
-        // Create header with all source files
+        // Create FileService instance for path resolution
+        const fileService = new FileService();
+        const mapFileUri = vscode.Uri.file(mapFilePath);
+        
+        // Create header with resolved source file paths
         const header: DescHeader = {
             inputs: sourceMap.sources.map(src => {
-                // Keep relative paths as-is for better round-trip compatibility
-                return src;
+                // Use FileService to resolve paths with suffix matching
+                return fileService.resolvePath(src, mapFileUri, sourceMap.sourceRoot);
             }),
             comments: []
         };
         
-        // Create output section
+        // Create output section with resolved generated file path
+        const resolvedOutputPath = sourceMap.file 
+            ? fileService.resolveGeneratedFile(sourceMap.file, mapFileUri) || sourceMap.file
+            : path.basename(mapFilePath, '.map');
+            
         const output: DescOutput = {
-            filename: sourceMap.file || path.basename(mapFilePath, '.map'),
+            filename: resolvedOutputPath,
             content: this.generateOutputContent(sourceMap, decodedMappings)
         };
         

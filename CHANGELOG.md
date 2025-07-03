@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.0] - 2025-01-03
+
+### Added
+- Visual save feedback for .desc editor with checkmark indicator
+- Support for multiple input files in .desc editor
+  - INPUT field now accepts comma-separated values
+  - File browser can append to existing inputs
+  - Clear placeholder text explaining multiple file support
+
+### Fixed
+- Fixed INPUT field in .desc editor always resetting/clearing
+  - Frontend now properly uses `inputs` array from backend
+  - All references updated from `header.input` to `header.inputs[0]`
+- Fixed save functionality in .desc editor
+  - Save status now shows visual confirmation
+  - Document save events properly trigger UI updates
+- Fixed TypeScript errors with implicit any types in updateInput handler
+
+### Changed
+- Improved user experience with better tooltips and placeholders
+- Enhanced .desc editor stability and responsiveness
+
 ## [1.1.0] - 2025-01-03
 
 ### Added

@@ -70,8 +70,8 @@ export class StateBasedDescEditor {
                     </div>
                     <div class="header-field">
                         <label for="input-field">INPUT:</label>
-                        <input type="text" id="input-field" class="header-input" placeholder="source.js">
-                        <button class="browse-button" id="browse-input">
+                        <input type="text" id="input-field" class="header-input" placeholder="source.js (comma-separated for multiple)" title="Enter one or more source files, separated by commas">
+                        <button class="browse-button" id="browse-input" title="Browse for input file">
                             <i class="codicon codicon-folder-opened"></i>
                         </button>
                     </div>
@@ -82,6 +82,9 @@ export class StateBasedDescEditor {
                         Export to .map
                     </button>
                     <div class="toolbar-spacer"></div>
+                    <div class="save-status" id="save-status">
+                        <span class="save-indicator"></span>
+                    </div>
                     <div class="edit-status" id="edit-status">
                         <span class="status-text">Select characters to create a mapping (Cmd+Click)</span>
                     </div>
@@ -136,9 +139,11 @@ export class StateBasedDescEditor {
         const outputField = document.getElementById('output-field') as HTMLInputElement;
         
         inputField?.addEventListener('change', () => {
+            // Parse comma-separated values
+            const inputs = inputField.value.split(',').map(s => s.trim()).filter(s => s);
             vscode.postMessage({
                 type: 'updateInput',
-                value: inputField.value
+                value: inputs
             });
         });
         
@@ -204,7 +209,13 @@ export class StateBasedDescEditor {
                 case 'inputSelected':
                     const inputField = document.getElementById('input-field') as HTMLInputElement;
                     if (inputField) {
-                        inputField.value = message.path;
+                        // Append to existing inputs if any, otherwise set as first input
+                        const currentInputs = inputField.value.split(',').map(s => s.trim()).filter(s => s);
+                        if (currentInputs.length === 0 || (currentInputs.length === 1 && currentInputs[0] === '')) {
+                            inputField.value = message.path;
+                        } else {
+                            inputField.value = currentInputs.join(', ') + ', ' + message.path;
+                        }
                         inputField.dispatchEvent(new Event('change'));
                     }
                     break;
@@ -214,6 +225,9 @@ export class StateBasedDescEditor {
                         outputField.value = message.path;
                         outputField.dispatchEvent(new Event('change'));
                     }
+                    break;
+                case 'saved':
+                    this.showSaveStatus();
                     break;
             }
         });
@@ -755,7 +769,7 @@ export class StateBasedDescEditor {
         } else {
             // Source location toggle
             const srcLoc = {
-                sourceFile: this.state.descFile?.header.input || '',
+                sourceFile: this.state.descFile?.header.inputs[0] || '',
                 line,
                 column: col
             };
@@ -961,7 +975,7 @@ export class StateBasedDescEditor {
                     locations.push({ line: range.line, column: col });
                 } else {
                     locations.push({ 
-                        sourceFile: this.state.descFile?.header.input || '', 
+                        sourceFile: this.state.descFile?.header.inputs[0] || '', 
                         line: range.line, 
                         column: col 
                     });
@@ -1178,6 +1192,23 @@ export class StateBasedDescEditor {
                     }
                 }
             ]);
+        }
+    }
+    
+    private showSaveStatus(): void {
+        const saveStatus = document.getElementById('save-status');
+        if (saveStatus) {
+            const indicator = saveStatus.querySelector('.save-indicator');
+            if (indicator) {
+                indicator.innerHTML = '<i class="codicon codicon-check"></i> Saved';
+                saveStatus.classList.add('saved');
+                
+                // Remove the saved class after 3 seconds
+                setTimeout(() => {
+                    saveStatus.classList.remove('saved');
+                    indicator.innerHTML = '';
+                }, 3000);
+            }
         }
     }
     
