@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2] - 2025-01-03
+
+### Fixed
+- Fixed build error where deleted DescSerializer.ts file was included in release
+- Same fixes as 1.2.1 but with corrected build artifacts
+
 ## [1.2.1] - 2025-01-03
 
 ### Fixed
