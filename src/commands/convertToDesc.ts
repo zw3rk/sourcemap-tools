@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { MapToDescConverter } from '../converter/MapToDescConverter';
-import { DescSerializer } from '../converter/DescSerializer';
+import { DescParser } from '../editor/DescParser';
 import { SourceMapV3 } from '../common/DescEditorMessages';
 import { Logger } from '../common/logger';
 
@@ -43,7 +43,6 @@ export async function convertToDescCommand(uri?: vscode.Uri): Promise<void> {
         
         // Convert to .desc format
         const descFile = MapToDescConverter.convert(sourceMap, fileUri.fsPath);
-        const descContent = DescSerializer.serialize(descFile);
         
         // Ask user where to save
         const defaultPath = fileUri.fsPath.replace(/\.map$/, '.desc');
@@ -56,6 +55,7 @@ export async function convertToDescCommand(uri?: vscode.Uri): Promise<void> {
         });
         
         if (saveUri) {
+            const descContent = await DescParser.serializeToFile(descFile, saveUri.fsPath);
             await fs.promises.writeFile(saveUri.fsPath, descContent);
             vscode.window.showInformationMessage(`Description file created at ${path.basename(saveUri.fsPath)}`);
             

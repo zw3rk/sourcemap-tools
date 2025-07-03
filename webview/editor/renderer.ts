@@ -6,7 +6,7 @@ export class Renderer {
 
     render(state: AppState, _container: HTMLElement): void {
         // Store content for context extraction
-        this.generatedContent = state.descFile?.output.content || '';
+        this.generatedContent = state.outputContent || '';
         this.sourceContent = state.sourceContent || '';
         
         // Update header fields
@@ -36,7 +36,7 @@ export class Renderer {
             inputField.value = state.descFile.header.inputs.join(', ') || '';
         }
         if (outputField && state.descFile) {
-            outputField.value = state.descFile.output.filename || '';
+            outputField.value = state.descFile.header.output || '';
         }
         
         // Update filenames
@@ -47,7 +47,7 @@ export class Renderer {
             sourceFilename.textContent = state.descFile.header.inputs[0] || 'No file selected';
         }
         if (generatedFilename && state.descFile) {
-            generatedFilename.textContent = state.descFile.output.filename || 'No file selected';
+            generatedFilename.textContent = state.descFile.header.output || 'No file selected';
         }
     }
 
@@ -57,7 +57,7 @@ export class Renderer {
 
         const placeholder = document.getElementById('generated-placeholder');
         
-        if (!state.descFile.output.content) {
+        if (!state.outputContent) {
             if (placeholder) placeholder.style.display = 'block';
             container.innerHTML = '';
             return;
@@ -66,7 +66,7 @@ export class Renderer {
         if (placeholder) placeholder.style.display = 'none';
 
         // Remove leading/trailing whitespace to avoid empty lines
-        const content = state.descFile.output.content.trim();
+        const content = state.outputContent.trim();
         const lines = content ? content.split('\n') : [];
         const html = lines.map((line, idx) => {
             const lineNum = idx + 1;
@@ -183,7 +183,7 @@ export class Renderer {
             const isExpanded = mapping.isExpanded !== false; // Default to expanded
             
             // Get file names
-            const genFile = state.descFile?.output.filename || 'generated';
+            const genFile = state.descFile?.header.output || 'generated';
             const srcFile = state.descFile?.header.inputs[0] || 'source';
             
             // Collect all pairs from all segments with their original indices

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { DescParser, DescFile } from './DescParser';
+import { DescParser, DescFile, DescMapping } from './DescParser';
 import { encodeVLQArray } from '../common/vlq';
 import { Logger } from '../common/logger';
 import { getNonce } from '../common/utils';
-import { 
+import {
     UpdateDescMessage,
     ErrorDescMessage,
     SourceMapV3
@@ -49,7 +49,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
         webviewPanel.webview.html = this.getHtmlContent(webviewPanel.webview);
 
         let descFile: DescFile | null = null;
-        
+
         const updateWebview = async (): Promise<void> => {
             try {
                 // Handle empty documents
@@ -59,15 +59,11 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     descFile = {
                         header: {
                             inputs: [],
-                            comments: []
-                        },
-                        output: {
-                            filename: '',
-                            content: ''
+                            output: ''
                         },
                         mappings: []
                     };
-                    
+
                     // Initialize the document with basic structure
                     const edit = new vscode.WorkspaceEdit();
                     const template = `INPUT: \n\nOUTPUT: \n\n# Mappings use 1-based indices\n[gen-col,src-idx,src-line,src-col,TYPE] -- optional comment\n[-] -- line break marker\n`;
@@ -75,9 +71,9 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     await vscode.workspace.applyEdit(edit);
                     return;
                 }
-                
+
                 descFile = DescParser.parse(document.getText());
-                
+
                 // Load source file content if it exists (using first input for now)
                 let sourceContent = '';
                 if (descFile.header.inputs && descFile.header.inputs.length > 0 && descFile.header.inputs[0]) {
@@ -88,26 +84,23 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         console.warn(`Could not load source file: ${sourcePath}`);
                     }
                 }
-                
+
                 // Load output file content if it exists
                 let outputContent = '';
-                if (descFile.output.filename) {
-                    const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.output.filename);
+                if (descFile.header.output) {
+                    const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.header.output);
                     try {
                         outputContent = await fs.promises.readFile(outputPath, 'utf-8');
-                        // Update the desc file's content with the actual file content
-                        descFile.output.content = outputContent;
                     } catch (err) {
                         console.warn(`Could not load output file: ${outputPath}`);
-                        // Fall back to embedded content if file doesn't exist
-                        outputContent = descFile.output.content || '';
                     }
                 }
-                
+
                 const updateMsg: UpdateDescMessage = {
                     type: 'update',
                     desc: descFile,
                     sourceContent,
+                    outputContent,
                     documentUri: document.uri.toString()
                 };
                 void webviewPanel.webview.postMessage(updateMsg);
@@ -123,12 +116,12 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
         // Handle messages from the webview
         webviewPanel.webview.onDidReceiveMessage(async (message: any) => {
             const logger = Logger.getInstance();
-            
+
             switch (message.type) {
                 case 'ready':
                     await updateWebview();
                     break;
-                
+
                 case 'log':
                     if (message.data !== undefined && message.data !== null) {
                         logger.log(message.message as string, message.data);
@@ -136,23 +129,23 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                         logger.log(message.message as string);
                     }
                     break;
-                
+
                 case 'addMapping':
                     if (descFile && message.mapping) {
                         // Insert new mapping at the appropriate position
                         const newMapping = message.mapping;
                         logger.log('Adding mapping', newMapping);
-                        
+
                         const edit = new vscode.WorkspaceEdit();
-                        
+
                         // Calculate source index - for now we only support single source file (srcIdx = 1)
                         // TODO: Support multiple source files
                         const srcIdx = 1;
-                        
+
                         // Find the right position to insert
                         let insertLine = document.lineCount;
                         let mappingsSectionStart = -1;
-                        
+
                         // First, find where the mappings section starts
                         for (let i = 0; i < document.lineCount; i++) {
                             const line = document.lineAt(i).text;
@@ -162,17 +155,17 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                 break;
                             }
                         }
-                        
+
                         if (mappingsSectionStart >= 0) {
                             // Track the current state
                             let currentGenLine = 1;
                             let lastMappingLine = mappingsSectionStart - 1;
                             let foundTargetPosition = false;
-                            
+
                             // First pass: find where we should insert and what's the current max line
                             for (let j = mappingsSectionStart; j < document.lineCount; j++) {
                                 const mappingLine = document.lineAt(j).text.trim();
-                                
+
                                 if (mappingLine === '[-]') {
                                     lastMappingLine = j;
                                     currentGenLine++;
@@ -199,15 +192,15 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                     }
                                 }
                             }
-                            
+
                             // If we haven't found a position yet, we need to add at the end
                             if (!foundTargetPosition) {
                                 insertLine = lastMappingLine + 1;
                             }
-                            
+
                             // Now we need to add any missing line breaks
                             const lineBreaksToAdd: string[] = [];
-                            
+
                             // Add line breaks for any missing lines between currentGenLine and target
                             logger.log(`Current line: ${currentGenLine}, Target line: ${newMapping.genLine}`);
                             while (currentGenLine < newMapping.genLine) {
@@ -215,12 +208,12 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                 currentGenLine++;
                             }
                             logger.log(`Adding ${lineBreaksToAdd.length} line breaks before mapping`);
-                            
+
                             // Prepare the mapping text
-                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0) 
+                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0)
                                 ? `[${newMapping.genCol}]`
                                 : `[${newMapping.genCol},${srcIdx},${newMapping.srcLine},${newMapping.srcCol},${newMapping.semanticType}]`;
-                            
+
                             // Insert line breaks and the mapping
                             if (lineBreaksToAdd.length > 0) {
                                 const allText = lineBreaksToAdd.join('') + mappingText + '\n';
@@ -230,37 +223,37 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             }
                         } else {
                             // No mappings section found - this shouldn't happen with our template
-                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0) 
+                            const mappingText = (!newMapping.srcLine || newMapping.srcLine === 0)
                                 ? `[${newMapping.genCol}]`
                                 : `[${newMapping.genCol},${srcIdx},${newMapping.srcLine},${newMapping.srcCol},${newMapping.semanticType}]`;
                             edit.insert(document.uri, new vscode.Position(insertLine, 0), mappingText + '\n');
                         }
-                        
+
                         await vscode.workspace.applyEdit(edit);
                     }
                     break;
-                
+
                 case 'deleteMapping': {
                     const mappingIndex = message.index as number;
                     logger.log(`Deleting mapping at index ${mappingIndex}`, {
                         totalMappings: descFile?.mappings.length,
                         mapping: descFile?.mappings[mappingIndex]
                     });
-                    
+
                     if (descFile && mappingIndex >= 0 && mappingIndex < descFile.mappings.length) {
                         const targetMapping = descFile.mappings[mappingIndex];
-                        
+
                         // Only delete if it's an actual mapping, not a line break
                         if (!targetMapping || targetMapping.type !== 'mapping') {
                             logger.log('Skipping deletion - not a mapping type', targetMapping);
                             break;
                         }
-                        
+
                         // Find the line in the document that corresponds to this mapping
                         // We need to match the exact mapping based on its content
                         let lineToDelete = -1;
                         let mappingsSectionStart = -1;
-                        
+
                         // First find where mappings start
                         for (let i = 0; i < document.lineCount; i++) {
                             if (document.lineAt(i).text.includes('1-based absolute indices')) {
@@ -268,7 +261,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                 break;
                             }
                         }
-                        
+
                         if (mappingsSectionStart >= 0) {
                             // Now find the specific mapping line
                             let currentIdx = 0;
@@ -284,7 +277,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                                 }
                             }
                         }
-                        
+
                         if (lineToDelete >= 0) {
                             const edit = new vscode.WorkspaceEdit();
                             edit.delete(document.uri, new vscode.Range(lineToDelete, 0, lineToDelete + 1, 0));
@@ -296,7 +289,7 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                     }
                     break;
                 }
-                
+
                 case 'syncMappings': {
                     if (descFile && message.mappings && Array.isArray(message.mappings)) {
                         const mappings = message.mappings as Array<{
@@ -306,143 +299,68 @@ export class DescEditorProvider implements vscode.CustomTextEditorProvider {
                             srcCol: number;
                             semanticType?: string;
                         }>;
-                        logger.log('Syncing all mappings', { 
+                        logger.log('Syncing all mappings', {
                             count: mappings.length,
                             firstMapping: mappings[0],
                             allMappings: mappings
                         });
+
+                        // Convert frontend mappings to DescMapping format
+                        const descMappings: DescMapping[] = [];
+                        let currentGenLine = 1;
                         
-                        // First, update the output content from disk before saving
-                        const edit = new vscode.WorkspaceEdit();
-                        
-                        // Find OUTPUT: line and content section
-                        let outputLineIndex = -1;
-                        let contentStartIndex = -1;
-                        let mappingCommentIndex = -1;
-                        
-                        for (let i = 0; i < document.lineCount; i++) {
-                            const line = document.lineAt(i);
-                            if (line.text.startsWith('OUTPUT:')) {
-                                outputLineIndex = i;
-                            } else if (outputLineIndex >= 0 && line.text.includes('1-based absolute indices')) {
-                                mappingCommentIndex = i;
-                                // Content is between OUTPUT line and mapping comment
-                                if (outputLineIndex + 1 < mappingCommentIndex) {
-                                    contentStartIndex = outputLineIndex + 1;
-                                }
-                                break;
+                        // Sort mappings by generated line and column
+                        const sortedMappings = [...mappings].sort((a, b) => {
+                            if (a.genLine !== b.genLine) {
+                                return a.genLine - b.genLine;
                             }
-                        }
-                        
-                        // Update output content from disk if OUTPUT file exists
-                        if (outputLineIndex >= 0 && descFile.output.filename) {
-                            try {
-                                const outputPath = path.resolve(path.dirname(document.uri.fsPath), descFile.output.filename);
-                                const outputContent = await fs.promises.readFile(outputPath, 'utf-8');
-                                
-                                // Delete old content lines
-                                if (contentStartIndex >= 0 && mappingCommentIndex > contentStartIndex) {
-                                    for (let i = mappingCommentIndex - 1; i >= contentStartIndex; i--) {
-                                        edit.delete(document.uri, new vscode.Range(i, 0, i + 1, 0));
-                                    }
-                                }
-                                
-                                // Insert fresh content from disk
-                                edit.insert(document.uri, new vscode.Position(outputLineIndex + 1, 0), outputContent + '\n');
-                            } catch (err) {
-                                logger.log(`Could not refresh output content from disk: ${err}`);
-                            }
-                        }
-                        
-                        // Now handle mappings - recalculate mappingsSectionStart after content update
-                        mappingCommentIndex = -1;
-                        for (let i = 0; i < document.lineCount; i++) {
-                            if (document.lineAt(i).text.includes('1-based absolute indices')) {
-                                mappingCommentIndex = i;
-                                break;
-                            }
-                        }
-                        
-                        if (mappingCommentIndex >= 0) {
-                            const mappingsSectionStart = mappingCommentIndex + 1;
-                            
-                            // Delete all existing mappings
-                            let endLine = mappingsSectionStart;
-                            for (let i = mappingsSectionStart; i < document.lineCount; i++) {
-                                const lineText = document.lineAt(i).text.trim();
-                                if (lineText.startsWith('[') || lineText === '') {
-                                    endLine = i + 1;
-                                } else {
-                                    break;
-                                }
+                            return a.genCol - b.genCol;
+                        });
+
+                        // Convert to DescMapping format with line breaks
+                        for (const mapping of sortedMappings) {
+                            // Add line breaks as needed
+                            while (currentGenLine < mapping.genLine) {
+                                descMappings.push({
+                                    type: 'linebreak',
+                                    genLine: currentGenLine
+                                });
+                                currentGenLine++;
                             }
                             
-                            if (endLine > mappingsSectionStart) {
-                                edit.delete(document.uri, new vscode.Range(mappingsSectionStart, 0, endLine, 0));
-                            }
-                            
-                            // Sort mappings by generated line and column
-                            const sortedMappings = [...mappings].sort((a, b) => {
-                                if (a.genLine !== b.genLine) {
-return a.genLine - b.genLine;
-}
-                                return a.genCol - b.genCol;
+                            // Add the mapping
+                            descMappings.push({
+                                type: 'mapping',
+                                genLine: mapping.genLine,
+                                genCol: mapping.genCol,
+                                srcIdx: 1, // TODO: Support multiple source files
+                                srcLine: mapping.srcLine,
+                                srcCol: mapping.srcCol,
+                                semanticType: mapping.semanticType
                             });
-                            
-                            // Group mappings by generated line
-                            const mappingsByLine = new Map<number, typeof sortedMappings>();
-                            for (const mapping of sortedMappings) {
-                                const lineMapppings = mappingsByLine.get(mapping.genLine) || [];
-                                lineMapppings.push(mapping);
-                                mappingsByLine.set(mapping.genLine, lineMapppings);
-                            }
-                            
-                            // Add all new mappings with linebreak markers
-                            const mappingLines: string[] = [];
-                            
-                            // Get all unique generated lines in order
-                            const genLines = Array.from(mappingsByLine.keys()).sort((a, b) => a - b);
-                            
-                            // If we have no mappings at all, don't emit anything
-                            if (genLines.length === 0) {
-                                // No mappings to sync
-                            } else {
-                                // Find the maximum line number we need to process
-                                const maxLine = Math.max(...genLines);
-                                
-                                // Process each line from 1 to maxLine
-                                for (let lineNum = 1; lineNum <= maxLine; lineNum++) {
-                                    // Get mappings for this line (if any)
-                                    const lineMappings = mappingsByLine.get(lineNum) || [];
-                                    
-                                    // Add all mappings for this line
-                                    for (const mapping of lineMappings) {
-                                        const srcIdx = 1; // TODO: Support multiple source files
-                                        const mappingText = (!mapping.srcLine || mapping.srcLine === 0) 
-                                            ? `[${mapping.genCol}]`
-                                            : `[${mapping.genCol},${srcIdx},${mapping.srcLine},${mapping.srcCol},${mapping.semanticType ?? 'UNKNOWN'}]`;
-                                        mappingLines.push(mappingText);
-                                    }
-                                    
-                                    // Add newline marker after each line (except the last)
-                                    if (lineNum < maxLine) {
-                                        mappingLines.push('[-]');
-                                    }
-                                }
-                            }
-                            
-                            if (mappingLines.length > 0) {
-                                edit.insert(document.uri, new vscode.Position(mappingsSectionStart, 0), 
-                                    mappingLines.join('\n') + '\n');
-                            }
-                            
-                            await vscode.workspace.applyEdit(edit);
-                            logger.log('Sync completed');
                         }
+                        
+                        // Update descFile with new mappings
+                        descFile.mappings = descMappings;
+                        
+                        // Regenerate entire file content
+                        const newContent = await DescParser.serializeToFile(descFile, document.uri.fsPath);
+                        
+                        // Replace entire document
+                        const edit = new vscode.WorkspaceEdit();
+                        const fullRange = new vscode.Range(
+                            0, 0,
+                            document.lineCount - 1,
+                            document.lineAt(document.lineCount - 1).text.length
+                        );
+                        edit.replace(document.uri, fullRange, newContent);
+                        await vscode.workspace.applyEdit(edit);
+                        
+                        logger.log('Sync completed');
                     }
                     break;
                 }
-                
+
                 case 'updateMapping': {
                     const line = message.line as number;
                     const mapping = message.mapping;
@@ -459,96 +377,48 @@ break;
                     await vscode.workspace.applyEdit(updateEdit);
                     break;
                 }
-                
+
                 case 'updateInput':
                     if (descFile) {
-                        const inputEdit = new vscode.WorkspaceEdit();
+                        // Update the header
                         const inputs: string[] = Array.isArray(message.value) ? message.value as string[] : [message.value as string];
+                        descFile.header.inputs = inputs;
                         
-                        // Find all existing INPUT: lines
-                        let firstInputLine = -1;
-                        let lastInputLine = -1;
-                        for (let i = 0; i < document.lineCount; i++) {
-                            const line = document.lineAt(i);
-                            if (line.text.startsWith('INPUT:')) {
-                                if (firstInputLine === -1) {
-                                    firstInputLine = i;
-                                }
-                                lastInputLine = i;
-                            } else if (firstInputLine !== -1 && !line.text.startsWith('INPUT:')) {
-                                // We've passed all INPUT lines
-                                break;
-                            }
-                        }
+                        // Regenerate entire file content
+                        const newContent = await DescParser.serializeToFile(descFile, document.uri.fsPath);
                         
-                        if (firstInputLine !== -1) {
-                            // Delete all existing INPUT lines
-                            if (lastInputLine >= firstInputLine) {
-                                inputEdit.delete(document.uri, new vscode.Range(firstInputLine, 0, lastInputLine + 1, 0));
-                            }
-                            
-                            // Insert new INPUT lines
-                            const inputLines = inputs.map((input: string) => `INPUT: ${input}`).join('\n') + '\n';
-                            inputEdit.insert(document.uri, new vscode.Position(firstInputLine, 0), inputLines);
-                        } else {
-                            // No INPUT lines found, add at the beginning
-                            const inputLines = inputs.map((input: string) => `INPUT: ${input}`).join('\n') + '\n';
-                            inputEdit.insert(document.uri, new vscode.Position(0, 0), inputLines);
-                        }
-                        
-                        await vscode.workspace.applyEdit(inputEdit);
+                        // Replace entire document
+                        const edit = new vscode.WorkspaceEdit();
+                        const fullRange = new vscode.Range(
+                            0, 0,
+                            document.lineCount - 1,
+                            document.lineAt(document.lineCount - 1).text.length
+                        );
+                        edit.replace(document.uri, fullRange, newContent);
+                        await vscode.workspace.applyEdit(edit);
                     }
                     break;
-                
+
                 case 'updateOutput':
                     if (descFile) {
-                        const outputEdit = new vscode.WorkspaceEdit();
-                        let outputLineIndex = -1;
-                        let contentStartIndex = -1;
+                        // Update the header
+                        descFile.header.output = message.value || '';
                         
-                        // Find OUTPUT: line
-                        for (let i = 0; i < document.lineCount; i++) {
-                            const line = document.lineAt(i);
-                            if (line.text.startsWith('OUTPUT:')) {
-                                outputLineIndex = i;
-                                outputEdit.replace(
-                                    document.uri,
-                                    new vscode.Range(i, 0, i, line.text.length),
-                                    `OUTPUT: ${message.value}`
-                                );
-                            } else if (outputLineIndex >= 0 && line.text.includes('1-based absolute indices')) {
-                                contentStartIndex = i;
-                                break;
-                            }
-                        }
+                        // Regenerate entire file content
+                        const newContent = await DescParser.serializeToFile(descFile, document.uri.fsPath);
                         
-                        // If OUTPUT filename changed and file exists, load its content
-                        if (message.value !== null && message.value !== undefined && message.value !== '' && outputLineIndex >= 0 && contentStartIndex >= 0) {
-                            try {
-                                const outputPath = path.resolve(path.dirname(document.uri.fsPath), message.value);
-                                const outputContent = await fs.promises.readFile(outputPath, 'utf-8');
-                                
-                                // Replace content between OUTPUT: line and mappings comment
-                                const contentLines = outputContent.split('\n');
-                                const newContent = contentLines.join('\n');
-                                
-                                // Delete old content lines
-                                for (let i = contentStartIndex - 1; i > outputLineIndex; i--) {
-                                    outputEdit.delete(document.uri, new vscode.Range(i, 0, i + 1, 0));
-                                }
-                                
-                                // Insert new content
-                                outputEdit.insert(document.uri, new vscode.Position(outputLineIndex + 1, 0), newContent + '\n');
-                            } catch (err) {
-                                // File doesn't exist yet, that's okay
-                                logger.log(`Output file not found: ${message.value}`);
-                            }
-                        }
-                        
-                        await vscode.workspace.applyEdit(outputEdit);
+                        // Replace entire document
+                        const edit = new vscode.WorkspaceEdit();
+                        const fullRange = new vscode.Range(
+                            0, 0,
+                            document.lineCount - 1,
+                            document.lineAt(document.lineCount - 1).text.length
+                        );
+                        edit.replace(document.uri, fullRange, newContent);
+                        await vscode.workspace.applyEdit(edit);
                     }
                     break;
-                
+
                 case 'browseInput': {
                     const inputFileUri = await vscode.window.showOpenDialog({
                         canSelectFiles: true,
@@ -558,7 +428,7 @@ break;
                             'All Files': ['*']
                         }
                     });
-                    
+
                     if (inputFileUri && inputFileUri[0]) {
                         const relativePath = path.relative(path.dirname(document.uri.fsPath), inputFileUri[0].fsPath);
                         void webviewPanel.webview.postMessage({
@@ -568,7 +438,7 @@ break;
                     }
                     break;
                 }
-                
+
                 case 'browseOutput': {
                     const outputFileUri = await vscode.window.showOpenDialog({
                         canSelectFiles: true,
@@ -578,7 +448,7 @@ break;
                             'All Files': ['*']
                         }
                     });
-                    
+
                     if (outputFileUri && outputFileUri[0]) {
                         const relativePath = path.relative(path.dirname(document.uri.fsPath), outputFileUri[0].fsPath);
                         void webviewPanel.webview.postMessage({
@@ -588,13 +458,13 @@ break;
                     }
                     break;
                 }
-                
+
                 case 'exportToSourceMap':
                     if (descFile) {
                         await this.exportToSourceMap(descFile, document.uri, webviewPanel);
                     }
                     break;
-                
+
                 case 'openInTextEditor':
                     // Open the current .desc file in text editor
                     await vscode.commands.executeCommand('workbench.action.reopenTextEditor', document.uri);
@@ -605,7 +475,7 @@ break;
         // Update webview when document changes
         // Track the update timer
         let updateTimer: NodeJS.Timeout | undefined;
-        
+
         const changeDocumentSubscription = vscode.workspace.onDidChangeTextDocument(e => {
             if (e.document.uri.toString() === document.uri.toString()) {
                 // Debounce rapid changes to avoid excessive updates
@@ -644,7 +514,7 @@ break;
         const scriptUri = webview.asWebviewUri(
             vscode.Uri.file(path.join(this.context.extensionPath, 'out', 'webview', 'editor', scriptFileName))
         );
-        
+
         const styleUri = webview.asWebviewUri(
             vscode.Uri.file(path.join(this.context.extensionPath, 'resources', 'styles', 'editor.css'))
         );
@@ -677,12 +547,12 @@ break;
             </html>`;
     }
 
-    
+
     private async exportToSourceMap(descFile: DescFile, documentUri: vscode.Uri, _webviewPanel: vscode.WebviewPanel) {
         try {
             // Generate source map
             const sourceMap = this.generateSourceMap(descFile);
-            
+
             // Ask user where to save
             const defaultPath = documentUri.fsPath.replace(/\.desc$/, '.map');
             const saveUri = await vscode.window.showSaveDialog({
@@ -692,7 +562,7 @@ break;
                     'All Files': ['*']
                 }
             });
-            
+
             if (saveUri) {
                 await fs.promises.writeFile(saveUri.fsPath, JSON.stringify(sourceMap, null, 2));
                 vscode.window.showInformationMessage(`Source map exported to ${path.basename(saveUri.fsPath)}`);
@@ -701,34 +571,34 @@ break;
             vscode.window.showErrorMessage(`Failed to export source map: ${error}`);
         }
     }
-    
+
     private generateSourceMap(descFile: DescFile): SourceMapV3 {
         // Collect all unique names (semantic types)
         const namesSet = new Set<string>();
         descFile.mappings.forEach(mapping => {
-            if (mapping.type === 'mapping' && mapping.semanticType && 
+            if (mapping.type === 'mapping' && mapping.semanticType &&
                 mapping.semanticType !== 'UNKNOWN') {
                 namesSet.add(mapping.semanticType);
             }
         });
-        
+
         // Sort names to get deterministic order
         const names = Array.from(namesSet).sort();
         const nameToIndex = new Map<string, number>();
         names.forEach((name, index) => {
             nameToIndex.set(name, index);
         });
-        
+
         // Process mappings
         let prevGenCol = 0;
         let prevSrcIndex = 0;
         let prevSrcLine = 0;
         let prevSrcCol = 0;
         let prevNameIndex = 0;
-        
+
         const generatedLines: string[] = [];
         let currentLineSegments: string[] = [];
-        
+
         for (const mapping of descFile.mappings) {
             if (mapping.type === 'linebreak') {
                 // New line in generated file
@@ -738,30 +608,30 @@ break;
             } else if (mapping.type === 'mapping' && mapping.genCol !== undefined) {
                 // Convert from 1-indexed to 0-indexed
                 const genCol = mapping.genCol - 1;
-                
+
                 // Build the segment
                 const segment: number[] = [];
-                
+
                 // Always include generated column delta
                 segment.push(genCol - prevGenCol);
                 prevGenCol = genCol;
-                
+
                 // If we have source info (4 or 5 value segment)
                 if (mapping.srcLine !== undefined && mapping.srcLine > 0 &&
                     mapping.srcCol !== undefined && mapping.srcIdx !== undefined) {
-                    
+
                     const srcIndex = mapping.srcIdx - 1;
                     const srcLine = mapping.srcLine - 1;
                     const srcCol = mapping.srcCol - 1;
-                    
+
                     segment.push(srcIndex - prevSrcIndex);
                     segment.push(srcLine - prevSrcLine);
                     segment.push(srcCol - prevSrcCol);
-                    
+
                     prevSrcIndex = srcIndex;
                     prevSrcLine = srcLine;
                     prevSrcCol = srcCol;
-                    
+
                     // If we have a name (5 value segment)
                     if (mapping.semanticType && mapping.semanticType !== 'UNKNOWN' &&
                         nameToIndex.has(mapping.semanticType)) {
@@ -771,20 +641,20 @@ break;
                     }
                 }
                 // Otherwise it's a 1-value segment (generated column only)
-                
+
                 currentLineSegments.push(encodeVLQArray(segment));
             }
         }
-        
+
         // Add the last line if it has segments
         if (currentLineSegments.length > 0 || generatedLines.length === 0) {
             generatedLines.push(currentLineSegments.join(','));
         }
-        
+
         // Create source map object
         return {
             version: 3,
-            file: descFile.output.filename || '',
+            file: descFile.header.output || '',
             sourceRoot: '',
             sources: descFile.header.inputs,
             names: names,

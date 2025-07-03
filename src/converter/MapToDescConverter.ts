@@ -1,5 +1,5 @@
 import { SourceMapV3 } from '../common/DescEditorMessages';
-import { DescFile, DescHeader, DescOutput, DescMapping } from '../editor/DescParser';
+import { DescFile, DescHeader, DescMapping } from '../editor/DescParser';
 import { decodeVLQ } from '../common/vlq';
 import { FileService } from '../common/FileService';
 import * as vscode from 'vscode';
@@ -21,22 +21,16 @@ export class MapToDescConverter {
         const mapFileUri = vscode.Uri.file(mapFilePath);
         
         // Create header with resolved source file paths
+        const resolvedOutputPath = sourceMap.file 
+            ? fileService.resolveGeneratedFile(sourceMap.file, mapFileUri) || sourceMap.file
+            : path.basename(mapFilePath, '.map');
+            
         const header: DescHeader = {
             inputs: sourceMap.sources.map(src => {
                 // Use FileService to resolve paths with suffix matching
                 return fileService.resolvePath(src, mapFileUri, sourceMap.sourceRoot);
             }),
-            comments: []
-        };
-        
-        // Create output section with resolved generated file path
-        const resolvedOutputPath = sourceMap.file 
-            ? fileService.resolveGeneratedFile(sourceMap.file, mapFileUri) || sourceMap.file
-            : path.basename(mapFilePath, '.map');
-            
-        const output: DescOutput = {
-            filename: resolvedOutputPath,
-            content: this.generateOutputContent(sourceMap, decodedMappings)
+            output: resolvedOutputPath
         };
         
         // Convert decoded mappings to DescMapping format
@@ -44,7 +38,6 @@ export class MapToDescConverter {
         
         return {
             header,
-            output,
             mappings
         };
     }
@@ -142,23 +135,6 @@ export class MapToDescConverter {
     /**
      * Generate output content with line numbers
      */
-    private static generateOutputContent(_sourceMap: SourceMapV3, mappings: DecodedMapping[]): string {
-        // Find the maximum line number to determine content length
-        let maxLine = 0;
-        for (const mapping of mappings) {
-            if (mapping.genLine > maxLine) {
-                maxLine = mapping.genLine;
-            }
-        }
-        
-        // Generate placeholder content with line numbers
-        const lines: string[] = [];
-        for (let i = 1; i <= maxLine; i++) {
-            lines.push(`// Line ${i}`);
-        }
-        
-        return lines.join('\n');
-    }
     
     /**
      * Convert decoded mappings to DescMapping format

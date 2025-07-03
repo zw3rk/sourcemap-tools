@@ -21,6 +21,7 @@ export interface UpdateDescMessage extends BaseDescMessage {
     type: 'update';
     desc: DescFile;
     sourceContent: string;
+    outputContent: string;
     documentUri: string;
 }
 

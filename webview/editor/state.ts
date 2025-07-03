@@ -45,6 +45,7 @@ export interface AppState {
     // Document data
     descFile: DescFile | null;
     sourceContent: string;
+    outputContent: string;
     
     // Mapping data
     mappings: Mapping[];
@@ -67,13 +68,8 @@ export interface AppState {
 // DescFile interface (matching the backend)
 export interface DescFile {
     header: {
-        inputs: string[];  // Changed from single input to array of inputs
-        version?: string;
-        comments: string[];
-    };
-    output: {
-        filename: string;
-        content: string;
+        inputs: string[];
+        output: string;  // Just the filename
     };
     mappings: Array<{
         type: 'mapping' | 'break';
@@ -87,7 +83,7 @@ export interface DescFile {
 
 // Action types for state updates
 export type StateAction = 
-    | { type: 'SET_DESC_FILE'; payload: { descFile: DescFile | null; sourceContent: string } }
+    | { type: 'SET_DESC_FILE'; payload: { descFile: DescFile | null; sourceContent: string; outputContent: string } }
     | { type: 'SELECT_MAPPING'; payload: { mappingId: string | null } }
     | { type: 'TOGGLE_MAPPING_VISIBILITY'; payload: { mappingId: string } }
     | { type: 'DELETE_MAPPING'; payload: { mappingId: string } }
@@ -115,6 +111,7 @@ export function stateReducer(state: AppState, action: StateAction): AppState {
                 ...state,
                 descFile: action.payload.descFile,
                 sourceContent: action.payload.sourceContent,
+                outputContent: action.payload.outputContent,
                 // Convert existing mappings to new format, preserving visibility and skipping deleted
                 mappings: convertDescMappingsToStateMappings(
                     action.payload.descFile?.mappings || [], 
@@ -716,6 +713,7 @@ export function createInitialState(): AppState {
     return {
         descFile: null,
         sourceContent: '',
+        outputContent: '',
         mappings: [],
         selectedMappingId: null,
         deletedMappingPositions: new Set<string>(),

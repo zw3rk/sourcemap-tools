@@ -6,7 +6,7 @@ import { BaseWebviewProvider, WebviewConfig } from '../common/BaseWebviewProvide
 import { debounce } from '../common/utils';
 import { VIEW_TYPES, DEFAULTS, COMMANDS } from '../common/constants';
 import { MapToDescConverter } from '../converter/MapToDescConverter';
-import { DescSerializer } from '../converter/DescSerializer';
+import { DescParser } from './DescParser';
 import { SourceMapV3 } from '../common/DescEditorMessages';
 
 export class MapEditorProvider extends BaseWebviewProvider implements vscode.CustomTextEditorProvider {
@@ -168,7 +168,6 @@ export class MapEditorProvider extends BaseWebviewProvider implements vscode.Cus
             
             // Convert to .desc format
             const descFile = MapToDescConverter.convert(sourceMap, document.uri.fsPath);
-            const descContent = DescSerializer.serialize(descFile);
             
             // Ask user where to save
             const defaultPath = document.uri.fsPath.replace(/\.map$/, '.desc');
@@ -181,6 +180,7 @@ export class MapEditorProvider extends BaseWebviewProvider implements vscode.Cus
             });
             
             if (saveUri) {
+                const descContent = await DescParser.serializeToFile(descFile, saveUri.fsPath);
                 await fs.promises.writeFile(saveUri.fsPath, descContent);
                 vscode.window.showInformationMessage(`Description file created at ${path.basename(saveUri.fsPath)}`);
                 

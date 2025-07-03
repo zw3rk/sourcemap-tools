@@ -78,17 +78,17 @@ The `.desc` format is a human-readable source map description:
 
 ```
 INPUT: source-file.ext
-VERSION
-1.0.0
--- Optional comments
+<contents of source-file.ext>
 
 OUTPUT: generated-file.ext
-<generated code content>
+<contents of generated-file.ext>
 
 # Mappings use 1-based indices
 [gen-col,src-idx,src-line,src-col,TYPE] -- optional comment
 [-] -- line break marker
 ```
+
+Note: The file contents shown after INPUT and OUTPUT lines are included for readability. When saving, these contents are always read fresh from disk to ensure they reflect the current state of the actual files.
 
 Example:
 ```
