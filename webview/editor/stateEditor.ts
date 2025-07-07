@@ -164,7 +164,7 @@ export class StateBasedDescEditor {
 
         // Toolbar buttons
         document.getElementById('export')?.addEventListener('click', () => {
-            vscode.postMessage({ type: 'exportSourceMap' });
+            vscode.postMessage({ type: 'exportToSourceMap' });
         });
 
         // Show/Hide all mapping buttons

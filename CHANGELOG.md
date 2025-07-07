@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2025-01-03
+
+### Fixed
+- Fixed "Export to .map" button not working due to message type mismatch
+  - Frontend was sending 'exportSourceMap' but backend expected 'exportToSourceMap'
+  - Export functionality now correctly generates and saves source map files
 ## [1.2.2] - 2025-01-03
 
 ### Fixed
